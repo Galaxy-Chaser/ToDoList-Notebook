@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TodoList & Notebook</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        /* 全局优化 */
+        :root {
+            --primary-color: #409EFF;
+            --success-color: #67C23A;
+            --danger-color: #F56C6C;
+            --bg-color: #f5f7fa;
+            --card-radius: 12px;
+        }
+
+        body {
+            background: var(--bg-color);
+            font-family: 'Helvetica Neue', Helvetica, 'PingFang SC',
+            'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 主容器 */
+        .app-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            border-radius: var(--card-radius);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
+        }
+
+        /* 选项卡优化 */
+        .el-tabs__header {
+            margin: 0 0 25px;
+            border-bottom-color: #e4e7ed;
+        }
+
+        .el-tabs__item {
+            font-size: 16px;
+            font-weight: 500;
+            padding: 0 28px;
+            transition: color 0.3s;
+        }
+
+        .el-tabs__item.is-active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .el-tabs__active-bar {
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), #6cb8ff);
+            border-radius: 2px;
+        }
+
+        /* 卡片设计 */
+        .card-container {
+            margin-bottom: 18px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .el-card {
+            border-radius: var(--card-radius) !important;
+            border: 1px solid #ebeef5;
+        }
+
+        .el-card__body {
+            padding: 20px 24px;
+        }
+
+        /* 卡片头部布局 */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* 操作按钮组 */
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card-container:hover .card-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s !important;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        /* 状态标签 */
+        .status-tag {
+            border-radius: 6px;
+            padding: 0 12px;
+            height: 28px;
+            line-height: 28px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        /* 内容区域 */
+        .card-content {
+            color: #606266;
+            line-height: 1.6;
+            margin: 12px 0;
+        }
+
+        .card-footer {
+            color: #909399;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 过滤栏 */
+        .filter-container {
+            padding: 18px;
+            background: #f8fafc;
+            border-radius: var(--card-radius);
+            margin-bottom: 25px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-item {
+            flex: 1 1 200px;
+            min-width: 200px;
+        }
+
+        .filter-item .el-input__inner,
+        .filter-item .el-range-input,
+        .filter-item .el-select-dropdown__item {
+            height: 40px;
+            line-height: 40px;
+        }
+
+        .filter-button {
+            height: 40px;
+            padding: 0 24px;
+        }
+
+        /* 调整日期选择器宽度 */
+        .el-date-editor.el-range-editor {
+            width: 280px;
+        }
+
+        /* 分页优化 */
+        .el-pagination {
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        /* 对话框优化 */
+        .el-dialog {
+            border-radius: 12px !important;
+        }
+
+        .el-dialog__header {
+            border-bottom: 1px solid #ebeef5;
+            padding: 15px 20px;
+        }
+
+        .el-dialog__body {
+            padding: 25px 30px;
+        }
+
+        /* 空状态提示 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 0;
+            color: #909399;
+        }
+
+        .expand-button {
+            margin-top: 10px;
+            text-align: right;
+            color: var(--primary-color); /* 使用全局变量定义的颜色 */
+            transition: color 0.3s; /* 添加颜色过渡效果 */
+        }
+
+        .expand-button:hover {
+            color: #66b1ff; /* 鼠标悬停时按钮颜色变化 */
+        }
+
+        /* 响应式布局 */
+        @media (max-width: 768px) {
+            .app-container {
+                margin: 15px;
+                padding: 20px;
+            }
+
+            .card-header {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .card-actions {
+                opacity: 1;
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .filter-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="app-container">
+        <el-tabs v-model="activeTab">
+            <!-- 待办事项模块 -->
+            <el-tab-pane label="待办事项" name="todo">
+                <div class="operation-bar">
+                    <el-button type="primary" icon="el-icon-plus" @click="showTodoDialog">新建待办</el-button>
+                </div>
+
+                <!-- 过滤条件 -->
+                <div class="filter-container">
+                    <el-input
+                            class="filter-item"
+                            v-model="todoQuery.title"
+                            placeholder="搜索标题"
+                            clearable
+                            suffix-icon="el-icon-search">
+                    </el-input>
+
+                    <el-date-picker
+                            class="filter-item"
+                            v-model="todoQuery.dateRange"
+                            type="daterange"
+                            range-separator="至"
+                            start-placeholder="开始日期"
+                            end-placeholder="结束日期">
+                    </el-date-picker>
+
+                    <el-select
+                            class="filter-item"
+                            v-model="todoQuery.status"
+                            placeholder="状态筛选"
+                            clearable>
+                        <el-option label="未完成" :value="0"></el-option>
+                        <el-option label="已完成" :value="1"></el-option>
+                    </el-select>
+
+                    <el-button
+                            class="filter-button"
+                            type="primary"
+                            icon="el-icon-search"
+                            @click="fetchTodos">
+                        搜索
+                    </el-button>
+                </div>
+
+                <!-- 待办列表 -->
+                <template v-if="todos.length">
+                    <div class="card-container" v-for="todo in todos" :key="'todo-'+todo.id">
+                        <el-card>
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <el-tag
+                                            :type="todo.status ? 'success' : 'danger'"
+                                            class="status-tag"
+                                            @click="toggleTodoStatus(todo)">
+                                        {{ todo.status ? '已完成' : '未完成' }}
+                                    </el-tag>
+                                    <span>{{ todo.title }}</span>
+                                </div>
+                                <div class="card-actions">
+                                    <el-button
+                                            class="action-btn"
+                                            icon="el-icon-edit"
+                                            @click="editTodo(todo)"></el-button>
+                                    <el-button
+                                            class="action-btn"
+                                            type="danger"
+                                            icon="el-icon-delete"
+                                            @click="deleteTodo(todo.id)"></el-button>
+                                </div>
+                            </div>
+                            <div class="card-content" v-if="todo.showFullContent">
+                                {{ todo.description }}
+                            </div>
+
+                            <!-- 待办事项模块中的展开按钮 -->
+                            <div class="card-footer">
+                                <span>截止日期：{{ formatDate(todo.dueDate) }}</span>
+                                <el-button
+                                        class="expand-button"
+                                        type="text"
+                                        @click="toggleExpand(todo)">
+                                    {{ todo.showFullContent ? '收起' : '展开' }}内容
+                                    <i :class="todo.showFullContent ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i>
+                                </el-button>
+                            </div>
+
+                        </el-card>
+                    </div>
+                </template>
+                <div v-else class="empty-state">
+                    <i class="el-icon-notebook-2" style="font-size: 48px;"></i>
+                    <p>暂无待办事项</p>
+                </div>
+
+                <!-- 分页 -->
+                <el-pagination
+                        @current-change="handleTodoPageChange"
+                        :current-page.sync="todoPager.page"
+                        :page-size="pageSize"
+                        layout="prev, pager, next"
+                        :total="todoPager.total">
+                </el-pagination>
+            </el-tab-pane>
+
+            <!-- 笔记模块 -->
+            <el-tab-pane label="笔记" name="note">
+                <div class="operation-bar">
+                    <el-button type="primary" icon="el-icon-plus" @click="showNoteDialog">新建笔记</el-button>
+                </div>
+
+                <!-- 搜索 -->
+                <div class="filter-container">
+                    <el-input
+                            class="filter-item"
+                            v-model="noteQuery.title"
+                            placeholder="搜索标题"
+                            clearable
+                            suffix-icon="el-icon-search">
+                    </el-input>
+                    <el-button
+                            class="filter-button"
+                            type="primary"
+                            @click="fetchNotes">
+                        搜索
+                    </el-button>
+                </div>
+
+                <!-- 笔记列表 -->
+                <template v-if="notes.length">
+                    <div class="card-container" v-for="note in notes" :key="'note-'+note.id">
+                        <el-card>
+                            <div class="card-header">
+                                <span class="card-title">{{ note.title }}</span>
+                                <div class="card-actions">
+                                    <el-button
+                                            class="action-btn"
+                                            icon="el-icon-edit"
+                                            @click="editNote(note)"></el-button>
+                                    <el-button
+                                            class="action-btn"
+                                            type="danger"
+                                            icon="el-icon-delete"
+                                            @click="deleteNote(note.id)"></el-button>
+                                </div>
+                            </div>
+                            <pre class="card-content" v-if="note.showFullContent">{{ note.content }}</pre>
+
+                            <!-- 笔记模块中的展开按钮 -->
+                            <div class="card-footer">
+                                <span>最后更新：{{ formatDateTime(note.updatedAt || note.createdAt) }}</span>
+                                <el-button
+                                        class="expand-button"
+                                        type="text"
+                                        @click="toggleExpandNote(note)">
+                                    {{ note.showFullContent ? '收起' : '展开' }}内容
+                                    <i :class="note.showFullContent ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i>
+                                </el-button>
+                            </div>
+                        </el-card>
+                    </div>
+                </template>
+                <div v-else class="empty-state">
+                    <i class="el-icon-document" style="font-size: 48px;"></i>
+                    <p>暂无笔记记录</p>
+                </div>
+
+                <!-- 分页 -->
+                <el-pagination
+                        @current-change="handleNotePageChange"
+                        :current-page.sync="notePager.page"
+                        :page-size="pageSize"
+                        layout="prev, pager, next"
+                        :total="notePager.total">
+                </el-pagination>
+            </el-tab-pane>
+        </el-tabs>
+    </div>
+
+    <!-- 待办事项弹窗 -->
+    <el-dialog :title="todoDialogTitle" :visible.sync="todoDialogVisible" width="600px">
+        <el-form :model="currentTodo" label-width="90px" ref="todoForm">
+            <el-form-item label="标题" prop="title">
+                <el-input v-model="currentTodo.title" placeholder="请输入待办标题"></el-input>
+            </el-form-item>
+            <el-form-item label="描述" prop="description">
+                <el-input
+                        type="textarea"
+                        :rows="3"
+                        v-model="currentTodo.description"
+                        placeholder="请输入详细描述（可选）"></el-input>
+            </el-form-item>
+            <el-form-item label="截止日期" prop="dueDate">
+                <el-date-picker
+                        v-model="currentTodo.dueDate"
+                        type="date"
+                        value-format="yyyy-MM-dd"
+                        placeholder="选择截止日期">
+                </el-date-picker>
+            </el-form-item>
+        </el-form>
+        <div slot="footer">
+            <el-button @click="todoDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="saveTodo">保存</el-button>
+        </div>
+    </el-dialog>
+
+    <!-- 笔记弹窗 -->
+    <el-dialog :title="noteDialogTitle" :visible.sync="noteDialogVisible" width="700px">
+        <el-form :model="currentNote" label-width="90px" ref="noteForm">
+            <el-form-item label="标题" prop="title">
+                <el-input v-model="currentNote.title" placeholder="请输入笔记标题"></el-input>
+            </el-form-item>
+            <el-form-item label="内容" prop="content">
+                <el-input
+                        type="textarea"
+                        :rows="6"
+                        v-model="currentNote.content"
+                        placeholder="开始记录你的想法..."
+                        resize="none"></el-input>
+            </el-form-item>
+        </el-form>
+        <div slot="footer">
+            <el-button @click="noteDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="saveNote">保存</el-button>
+        </div>
+    </el-dialog>
+</div>
+
+<script src="vue.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+<script src="https://unpkg.com/dayjs"></script>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                baseURL: 'http://localhost:8080/toDoListAndNoteBook',
+                activeTab: 'todo',
+                todos: [],
+                currentTodo: {},
+                todoDialogVisible: false,
+                todoDialogTitle: '新建待办',
+                todoQuery: { title: '', dateRange: [], status: '' },
+                todoPager: { page: 1, total: 0 },
+                pageSize: 5,  // 默认为5
+                notes: [],
+                currentNote: {},
+                noteDialogVisible: false,
+                noteDialogTitle: '新建笔记',
+                noteQuery: { title: '' },
+                notePager: { page: 1, total: 0 }
+            };
+        },
+        watch: {
+            // 监听分页大小变化
+            pageSize() {
+                if (this.activeTab === 'todo') {
+                    this.todoPager.page = 1;
+                    this.fetchTodos();
+                } else {
+                    this.notePager.page = 1;
+                    this.fetchNotes();
+                }
+            }
+        },
+        mounted() {
+            this.fetchTodos();
+            this.fetchNotes();
+        },
+        methods: {
+            // 修改后的fetchTodos方法
+            async fetchTodos() {
+                let url = `${this.baseURL}/todos/getAll`;
+                const params = {
+                    pageNum: this.todoPager.page,
+                    pageSize: this.pageSize
+                };
+
+                if (this.todoQuery.title) {
+                    url = `${this.baseURL}/todos/getByTitle`;
+                    params.title = this.todoQuery.title;
+                }
+
+                if (this.todoQuery.dateRange?.length === 2) {
+                    const startDate = this.formatDate(this.todoQuery.dateRange[0]);
+                    const endDate = this.formatDate(this.todoQuery.dateRange[1]);
+                    params.startDate = startDate;
+                    params.endDate = endDate;
+
+                    if (this.todoQuery.status !== '') {
+                        url = `${this.baseURL}/todos/getByDueDateAndStatus`;
+                        params.status = this.todoQuery.status;
+                    } else {
+                        url = `${this.baseURL}/todos/getByDueDate`;
+                    }
+                } else if (this.todoQuery.status !== '') {
+                    url = `${this.baseURL}/todos/getByStatus`;
+                    params.status = this.todoQuery.status;
+                }
+
+                try {
+                    const res = await axios.get(url, { params });
+                    this.todos = res.data.data.todos.map(todo => ({
+                        ...todo,
+                        showFullContent: false, // 默认不展开内容
+                        dueDate: todo.dueDate ? new Date(todo.dueDate) : null, // 确保处理截止日期
+                        updatedAt: todo.updatedAt ? Number(todo.updatedAt) * 1000 : null // 处理更新时间戳
+                    }));
+                    this.todoPager.total = res.data.data.total || 0;
+                } catch (error) {
+                    this.$message.error('获取待办数据失败');
+                }
+            },
+
+            // 修改后的fetchNotes方法
+            async fetchNotes() {
+                let url = `${this.baseURL}/notes/getAll`;
+                const params = {
+                    pageNum: this.notePager.page,
+                    pageSize: this.pageSize,
+                };
+                if (this.noteQuery.title) {
+                    url = `${this.baseURL}/notes/getByTitle`;
+                    params.title = this.noteQuery.title;
+                }
+                try {
+                    const res = await axios.get(url, { params });
+                    this.notes = res.data.data.notes.map(note => ({
+                        ...note,
+                        showFullContent: false , // 默认不展开内容
+                        updatedAt: note.updatedAt ? Number(note.updatedAt) * 1000 : null // 处理更新时间戳
+                    }));
+                    this.notePager.total = res.data.data.total || 0;
+                } catch (error) {
+                    this.$message.error('获取数据失败');
+                }
+            },
+
+            showTodoDialog() {
+                this.currentTodo = { status: 0 };
+                this.todoDialogTitle = '新建待办';
+                this.todoDialogVisible = true;
+            },
+
+            // 删除待办事项
+            async deleteTodo(id) {
+                try {
+                    await this.$confirm('确认删除该待办事项吗？', '提示', { type: 'warning' });
+                    await axios.delete(`${this.baseURL}/todos?id=${id}`);
+                    this.$message.success('删除成功');
+                    this.fetchTodos();
+                } catch (error) {
+                    if (error !== 'cancel') {
+                        this.$message.error('删除失败');
+                    }
+                }
+            },
+
+            // 切换待办事项状态
+            async toggleTodoStatus(todo) {
+                try {
+                    const newStatus = todo.status === 0 ? 1 : 0;
+                    await axios.put(`${this.baseURL}/todos`, { ...todo, status: newStatus });
+                    this.fetchTodos();
+                } catch (error) {
+                    this.$message.error('状态更新失败');
+                }
+            },
+
+            // 修改编辑待办方法
+            editTodo(todo) {
+                // 深拷贝对象避免直接修改原始数据
+                this.currentTodo = {
+                    ...todo,
+                    dueDate: todo.dueDate ? new Date(todo.dueDate) : null
+                };
+                this.todoDialogTitle = '编辑待办';
+                this.todoDialogVisible = true;
+            },
+
+            // 修改保存待办方法（添加表单验证）
+            async saveTodo() {
+                if (!this.currentTodo.title?.trim()) {
+                    this.$message.error('标题不能为空');
+                    return;
+                }
+                if (this.currentTodo.title.trim().length > 50) {
+                    this.$message.error('标题长度不能超过50字符');
+                    return;
+                }
+                if (!this.currentTodo.dueDate) {
+                    this.$message.error('请选择截止日期');
+                    return;
+                }
+
+                try {
+                    const todoData = {
+                        ...this.currentTodo,
+                        dueDate: dayjs(this.currentTodo.dueDate).format('YYYY-MM-DD')
+                    };
+
+                    const res = await (todoData.id ?
+                        axios.put(`${this.baseURL}/todos`, todoData) :
+                        axios.post(`${this.baseURL}/todos`, todoData));
+
+                    // if (this.currentTodo.id) {
+                    //     const index = this.todos.findIndex(n => n.id === this.currentTodo.id);
+                    //     if (index > -1) {
+                    //         this.notes.splice(index, 1, {
+                    //             ...res.data.data,
+                    //             // 确保使用服务器返回的更新时间
+                    //             updatedAt: res.data.data.updatedAt
+                    //         });
+                    //     }
+                    // } else {
+                    //     this.todoPager.page = 1;
+                    //     await this.fetchTodos();
+                    // }
+
+                    this.$message.success('保存成功');
+                    this.todoDialogVisible = false;
+
+                    // 智能更新列表（减少重复请求）
+                    if (todoData.id) {
+                        const index = this.todos.findIndex(t => t.id === todoData.id);
+                        if (index > -1) {
+                            this.todos.splice(index, 1, res.data.data);
+                        }
+                    } else {
+                        this.todoPager.page = 1; // 新增条目跳转第一页
+                        this.fetchTodos();
+                    }
+                } catch (error) {
+                    this.$message.error(error.response?.data?.message || '保存失败');
+                }
+            },
+
+            // 修改编辑笔记方法
+            editNote(note) {
+                // 深拷贝笔记对象
+                this.currentNote = { ...note };
+                this.noteDialogTitle = '编辑笔记';
+                this.noteDialogVisible = true;
+            },
+
+            // 修改保存笔记方法（添加表单验证）
+            async saveNote() {
+                if (!this.currentNote.title?.trim()) {
+                    this.$message.error('标题不能为空');
+                    return;
+                }
+                if (this.currentNote.title.trim().length > 50) {
+                    this.$message.error('标题长度不能超过50字符');
+                    return;
+                }
+                if (!this.currentNote.content?.trim()) {
+                    this.$message.error('内容不能为空');
+                    return;
+                }
+
+                try {
+                    const res = await (this.currentNote.id ?
+                        axios.put(`${this.baseURL}/notes`, this.currentNote) :
+                        axios.post(`${this.baseURL}/notes`, this.currentNote));
+
+                    this.$message.success('保存成功');
+                    this.noteDialogVisible = false;
+
+                    // 智能更新列表
+                    if (this.currentNote.id) {
+                        const index = this.notes.findIndex(n => n.id === this.currentNote.id);
+                        if (index > -1) {
+                            this.notes.splice(index, 1, {
+                                ...res.data.data,
+                                // 确保使用服务器返回的更新时间
+                                updatedAt: res.data.data.updatedAt
+                            });
+                        }
+                    } else {
+                        this.notePager.page = 1; // 新增条目跳转第一页
+                        this.fetchNotes();
+                    }
+                } catch (error) {
+                    this.$message.error(error.response?.data?.message || '保存失败');
+                }
+            },
+
+            // 显示笔记弹窗
+            showNoteDialog() {
+                this.currentNote = {};
+                this.noteDialogTitle = '新建笔记';
+                this.noteDialogVisible = true;
+            },
+
+            // 删除笔记
+            async deleteNote(id) {
+                try {
+                    await this.$confirm('确认删除该笔记吗？', '提示', { type: 'warning' });
+                    await axios.delete(`${this.baseURL}/notes?id=${id}`);
+                    this.$message.success('删除成功');
+                    this.fetchNotes();
+                } catch (error) {
+                    if (error !== 'cancel') {
+                        this.$message.error('删除失败');
+                    }
+                }
+            },
+
+            // 格式化日期
+            formatDate(date) {
+                if (!date) return '';
+                return dayjs(date).format('YYYY-MM-DD');
+            },
+
+            // 格式化日期时间
+            formatDateTime(datetime) {
+                if (!datetime) return '';
+                return dayjs(datetime).format('YYYY-MM-DD HH:mm');
+            },
+
+            // 修改分页处理方法（保持当前页码）
+            handleTodoPageChange(page) {
+                this.todoPager.page = page;
+                this.fetchTodos();
+            },
+
+            handleNotePageChange(page) {
+                this.notePager.page = page;
+                this.fetchNotes();
+            },
+
+            // 切换展开和收起状态
+            toggleExpand(todo) {
+                todo.showFullContent = !todo.showFullContent;
+            },
+
+            // 切换展开和收起状态 for notes
+            toggleExpandNote(note) {
+                note.showFullContent = !note.showFullContent;
+            },
+
+            // // 确保时间格式化方法正确处理时间戳
+            // formatDateTime(datetime) {
+            //     if (!datetime) return '';
+            //     // 如果后端返回的是秒级时间戳
+            //     const timestamp = Number(datetime);
+            //     return dayjs(timestamp).format('YYYY-MM-DD HH:mm');
+            // }
+        }
+    });
+</script>
+</body>
+</html>

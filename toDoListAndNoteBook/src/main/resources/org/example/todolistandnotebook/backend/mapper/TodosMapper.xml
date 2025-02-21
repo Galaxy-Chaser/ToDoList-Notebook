@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace = "org.example.todolistandnotebook.backend.mapper.TodosMapper">
+
+<!--    更新操作-->
+    <update id="update">
+        update todos
+        <set>
+            <if test="title != null">
+                title = #{title},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="dueDate != null">
+                dueDate = #{dueDate},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+
+    <!--    查询操作-->
+    <select id="getByDueDateOrStatus" resultType="org.example.todolistandnotebook.backend.pojo.Todo">
+        SELECT id, title, description, dueDate, status, createdAt, updatedAt
+        FROM todos
+        <where>
+
+            <!-- 日期范围查询 -->
+            <if test="start != null and end != null">
+                AND dueDate BETWEEN #{start} AND #{end}
+            </if>
+
+            <!-- 状态查询 -->
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        <!-- 当有日期参数时添加排序 -->
+        <if test="start != null and end != null">
+            ORDER BY dueDate DESC
+        </if>
+    </select>
+
+</mapper>
