@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - TodoList & Notebook</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        :root {
+            --primary-color: #409EFF;
+            --bg-color: #f5f7fa;
+        }
+
+        body {
+            background: var(--bg-color);
+            font-family: 'Helvetica Neue', Helvetica, 'PingFang SC',
+            'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-container {
+            width: 400px;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-title {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .login-subtitle {
+            color: #909399;
+            font-size: 14px;
+        }
+
+        .login-form {
+            margin-top: 30px;
+        }
+
+        .login-footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #909399;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div id="loginApp">
+    <div class="login-container">
+        <div class="login-header">
+            <h2 class="login-title">TodoList & Notebook</h2>
+            <p class="login-subtitle">高效管理你的任务与笔记</p>
+        </div>
+
+        <el-form
+                class="login-form"
+                :model="loginForm"
+                :rules="loginRules"
+                ref="loginForm"
+                @submit.native.prevent="handleLogin">
+
+            <el-form-item prop="username">
+                <el-input
+                        v-model="loginForm.username"
+                        prefix-icon="el-icon-user"
+                        placeholder="请输入用户名"
+                        clearable>
+                </el-input>
+            </el-form-item>
+
+            <el-form-item prop="password">
+                <el-input
+                        v-model="loginForm.password"
+                        prefix-icon="el-icon-lock"
+                        placeholder="请输入密码"
+                        show-password
+                        clearable>
+                </el-input>
+            </el-form-item>
+
+            <el-form-item>
+                <el-button
+                        type="primary"
+                        native-type="submit"
+                        :loading="loading"
+                        style="width: 100%">
+                    登录
+                </el-button>
+            </el-form-item>
+        </el-form>
+    </div>
+</div>
+
+<script src="vue.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+    new Vue({
+        el: '#loginApp',
+        data() {
+            return {
+                baseURL: 'http://localhost:8088/toDoListAndNoteBook',
+                loginForm: {
+                    username: '',
+                    password: ''
+                },
+                loginRules: {
+                    username: [
+                        { required: true, message: '请输入用户名', trigger: 'blur' }
+                    ],
+                    password: [
+                        { required: true, message: '请输入密码', trigger: 'blur' },
+                        { min: 6, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' }
+                    ]
+                },
+                loading: false
+            };
+        },
+        methods: {
+            handleLogin() {
+                this.$refs.loginForm.validate(valid => {
+                    if (valid) {
+                        this.loading = true;
+                        this.submitLogin();
+                    }
+                });
+            },
+
+            async submitLogin() {
+                try {
+                    const response = await axios.post(`${this.baseURL}/login`, {
+                        username: this.loginForm.username,
+                        password: this.loginForm.password
+                    });
+
+                    // 登录成功后的跳转逻辑
+                    localStorage.setItem('jwt_token', response.data.data);
+                    if (response.data.code === 200) {
+                        console.log('Token 已存储:', response.data.data); // 添加此行
+                        window.location.href = 'main.html';
+                    }else {
+                        this.$message.error(response.data.message || '登录失败');
+                    }
+                } catch (error) {
+                    const message = error.response?.data?.message || '登录请求失败';
+                    this.$message.error(message);
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

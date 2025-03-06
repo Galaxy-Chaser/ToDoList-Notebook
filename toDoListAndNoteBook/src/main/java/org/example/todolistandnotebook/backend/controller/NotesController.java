@@ -1,5 +1,6 @@
 package org.example.todolistandnotebook.backend.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.todolistandnotebook.backend.pojo.CommonResponse;
 import org.example.todolistandnotebook.backend.pojo.ListOfNotes;
 import org.example.todolistandnotebook.backend.pojo.Note;
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin
+
 @RestController
 @RequestMapping("/notes")
 public class NotesController {

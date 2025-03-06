@@ -476,13 +476,45 @@
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
 <script src="https://unpkg.com/dayjs"></script>
-
+<script src="https://unpkg.com/moment@2.29.1/min/moment.min.js"></script>
+<script src="https://unpkg.com/moment-timezone@0.5.33/builds/moment-timezone-with-data.min.js"></script>
+<script src="https://fastly.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
 <script>
+
+    // axios.defaults.withCredentials = true;  // 允许携带凭证
+    // 检查登录状态
+    if (!localStorage.getItem('jwt_token')) {
+        window.location.href = 'login.html';
+    }
+    // 添加请求拦截器
+    axios.interceptors.request.use(config => {
+        const token = localStorage.getItem('jwt_token');
+        console.log('[拦截器] Token:', token); // 调试输出
+        console.log('[拦截器] 请求URL:', config.url); // 调试输出
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    }, error => {
+        console.error('[拦截器] 请求错误:', error); // 错误输出
+        return Promise.reject(error);
+    });
+
+    // 添加响应拦截器
+    axios.interceptors.response.use(response => {
+        return response;
+    }, error => {
+        if (error.response.status === 401) {
+            localStorage.removeItem('jwt_token');
+            window.location.href = 'login.html';
+        }
+        return Promise.reject(error);
+    });
     new Vue({
         el: '#app',
         data() {
             return {
-                baseURL: 'http://localhost:8080/toDoListAndNoteBook',
+                baseURL: 'http://localhost:8088/toDoListAndNoteBook',
                 activeTab: 'todo',
                 todos: [],
                 currentTodo: {},
@@ -516,6 +548,7 @@
             this.fetchNotes();
         },
         methods: {
+
             // 修改后的fetchTodos方法
             async fetchTodos() {
                 let url = `${this.baseURL}/todos/getAll`;
@@ -651,20 +684,6 @@
                         axios.put(`${this.baseURL}/todos`, todoData) :
                         axios.post(`${this.baseURL}/todos`, todoData));
 
-                    // if (this.currentTodo.id) {
-                    //     const index = this.todos.findIndex(n => n.id === this.currentTodo.id);
-                    //     if (index > -1) {
-                    //         this.notes.splice(index, 1, {
-                    //             ...res.data.data,
-                    //             // 确保使用服务器返回的更新时间
-                    //             updatedAt: res.data.data.updatedAt
-                    //         });
-                    //     }
-                    // } else {
-                    //     this.todoPager.page = 1;
-                    //     await this.fetchTodos();
-                    // }
-
                     this.$message.success('保存成功');
                     this.todoDialogVisible = false;
 
@@ -762,9 +781,11 @@
 
             // 格式化日期时间
             formatDateTime(datetime) {
-                if (!datetime) return '';
                 return dayjs(datetime).format('YYYY-MM-DD HH:mm');
             },
+
+
+
 
             // 修改分页处理方法（保持当前页码）
             handleTodoPageChange(page) {
