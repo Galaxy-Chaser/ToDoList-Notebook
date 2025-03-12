@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.example.todolistandnotebook.backend.service.UsersService;
 import org.example.todolistandnotebook.backend.util.JwtUtil;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -13,6 +14,9 @@ import org.springframework.web.servlet.ModelAndView;
 @Component
 @Slf4j
 public class Interceptor implements HandlerInterceptor {
+
+    private UsersService usersService;
+
     @Override //目标方法执行前执行，可用于校验Jwt令牌
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String token = request.getHeader("authorization");

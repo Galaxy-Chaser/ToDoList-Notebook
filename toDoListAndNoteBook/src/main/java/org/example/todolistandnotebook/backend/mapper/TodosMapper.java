@@ -27,7 +27,7 @@ public interface TodosMapper {
     //查询所有待办事项
     @Select(
             "select id , title , description , dueDate , status , createdAt , updatedAt " +
-                    "from todos"
+                    "from todos order by status"
     )
     List<Todo> getAll();
 
