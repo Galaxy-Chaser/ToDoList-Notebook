@@ -11,8 +11,8 @@ public interface TodosMapper {
 
     //插入新todo
     @Options(keyProperty = "id" , useGeneratedKeys = true)
-    @Insert("insert into todos(title , description , dueDate , status) "
-        + "values (#{title} , #{description} , #{dueDate} , #{status})"
+    @Insert("insert into todos(title , description , dueDate , status , userId) "
+        + "values (#{title} , #{description} , #{dueDate} , #{status} , #{userId})"
     )
     void insert(Todo todo);
 
@@ -27,17 +27,17 @@ public interface TodosMapper {
     //查询所有待办事项
     @Select(
             "select id , title , description , dueDate , status , createdAt , updatedAt " +
-                    "from todos order by status"
+                    "from todos where userId = #{userId} order by status"
     )
-    List<Todo> getAll();
+    List<Todo> getAll(Integer userId);
 
     //根据标题内容查询
     @Select(
             "select id, title, description, dueDate, status, createdAt, updatedAt " +
             "from todos " +
-            "where title like concat('%', #{title}, '%') "
+            "where title like concat('%', #{title}, '%') and userId = #{userId}"
     )
-    List<Todo> getByTitle(@Param("title") String title);
+    List<Todo> getByTitle(@Param("title") String title , @Param("userId") Integer userId);
 
     //根据id查询
     @Select(
@@ -47,7 +47,7 @@ public interface TodosMapper {
     Todo getById(Long id);
 
     //根据截止时间或状态查询
-    List<Todo> getByDueDateOrStatus(@Param("start") Date start, @Param("end") Date end, @Param("status") Integer status);
+    List<Todo> getByDueDateOrStatus(@Param("start") Date start, @Param("end") Date end, @Param("status") Integer status ,@Param("userId") Integer userId);
 
 
 }

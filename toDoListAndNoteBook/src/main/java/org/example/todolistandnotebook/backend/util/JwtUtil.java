@@ -3,10 +3,12 @@ package org.example.todolistandnotebook.backend.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Date;
 import java.util.Map;
 
+@Slf4j
 public class JwtUtil {
 
     private String key = "JwtDemo";
@@ -37,7 +39,9 @@ public class JwtUtil {
      * 解析令牌并返回用户id
      */
     public Integer getIdFromJwt(String s){
+        s = s.substring(7);
         Claims claims = ParseJwt(s);
+        log.info(String.valueOf((Integer) claims.get("id")));
         return (Integer) claims.get("id");
     }
 }

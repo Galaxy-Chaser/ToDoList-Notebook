@@ -14,4 +14,5 @@ public class Note {
     private Timestamp createdAt;
 //    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Timestamp updatedAt;
+    private Integer userId;
 }

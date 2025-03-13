@@ -10,8 +10,8 @@ public interface NotesMapper {
 
     //插入新note
     @Options(keyProperty = "id" , useGeneratedKeys = true)
-    @Insert("insert into notes(title , content) "
-            + "values (#{title} , #{content})"
+    @Insert("insert into notes(title , content , userId) "
+            + "values (#{title} , #{content} , #{userId})"
     )
     void insert(Note note);
 
@@ -26,17 +26,17 @@ public interface NotesMapper {
     //查询所有待办事项
     @Select(
             "select id , title , content , createdAt , updatedAt " +
-                    "from notes order by updatedAt DESC"
+                    "from notes where userId = #{userId} order by updatedAt DESC"
     )
-    List<Note> getAll();
+    List<Note> getAll(Integer userId);
 
     //根据标题内容查询
     @Select(
             "select id , title , content , createdAt , updatedAt " +
                     "from notes " +
-                    "where title like concat('%', #{title}, '%') order by updatedAt DESC "
+                    "where title like concat('%', #{title}, '%') and userId = #{userId} order by updatedAt DESC "
     )
-    List<Note> getByTitle(@Param("title") String title);
+    List<Note> getByTitle(@Param("title") String title , Integer userId);
 
     //根据id查询
     @Select(

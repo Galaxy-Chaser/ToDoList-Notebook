@@ -40,6 +40,9 @@
             <if test="status != null">
                 AND status = #{status}
             </if>
+
+                AND userId = #{userId}
+
         </where>
         <!-- 当有日期参数时添加排序 -->
         <if test="start != null and end != null">

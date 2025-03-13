@@ -13,8 +13,9 @@ public interface NotesIService {
      *新增笔记
      *
      * @param note 笔记
+     * @param jwt jwt令牌
      */
-    Note InsertNotes(Note note);
+    Note InsertNotes(Note note, String jwt);
 
     /**
      *修改笔记
@@ -36,14 +37,16 @@ public interface NotesIService {
      * 查询笔记
      *
      * @param title 笔记的标题
+     * @param jwt jwt令牌
      * @return List<Note> 笔记列表
      */
-    ListOfNotes GetNotesByTitle(String title , Integer pageNum , Integer pageSize);
+    ListOfNotes GetNotesByTitle(String title , Integer pageNum , Integer pageSize, String jwt);
 
     /**
      * 查询所有笔记
      *
+     * @param jwt jwt令牌
      * @return List<Note> 笔记列表
      */
-    ListOfNotes GetAllNotes(Integer pageNum , Integer pageSize);
+    ListOfNotes GetAllNotes(Integer pageNum , Integer pageSize, String jwt);
 }

@@ -20,8 +20,8 @@ public class NotesController {
 
     //增
     @PostMapping
-    public CommonResponse<Note> addNote(@RequestBody Note note) {
-        Note newNote = service.InsertNotes(note);
+    public CommonResponse<Note> addNote(@RequestBody Note note , @RequestHeader("Authorization") String jwt) {
+        Note newNote = service.InsertNotes(note , jwt);
         return CommonResponse.success(newNote);
     }
 
@@ -37,17 +37,17 @@ public class NotesController {
     //查
     //查所有代表事项
     @GetMapping("/getAll")
-    public CommonResponse<ListOfNotes> getNotes(@RequestParam(defaultValue = "1") Integer pageNum , @RequestParam(defaultValue = "5") Integer pageSize) {
+    public CommonResponse<ListOfNotes> getNotes(@RequestParam(defaultValue = "1") Integer pageNum , @RequestParam(defaultValue = "5") Integer pageSize , @RequestHeader("Authorization") String jwt) {
         if(pageNum < 1)
             return CommonResponse.error();
-        return CommonResponse.success(service.GetAllNotes(pageNum , pageSize));
+        return CommonResponse.success(service.GetAllNotes(pageNum , pageSize , jwt));
     }
 
     @GetMapping("/getByTitle")
-    public CommonResponse<ListOfNotes> getNotes(@RequestParam String title , @RequestParam(defaultValue = "1") Integer pageNum , @RequestParam(defaultValue = "5") Integer pageSize) {
+    public CommonResponse<ListOfNotes> getNotes(@RequestParam String title , @RequestParam(defaultValue = "1") Integer pageNum , @RequestParam(defaultValue = "5") Integer pageSize , @RequestHeader("Authorization") String jwt) {
         if(pageNum < 1)
             return CommonResponse.error();
-        return CommonResponse.success(service.GetNotesByTitle(title , pageNum , pageSize));
+        return CommonResponse.success(service.GetNotesByTitle(title , pageNum , pageSize , jwt));
     }
 
 
