@@ -1,11 +1,10 @@
-package org.example.todolistandnotebook.backend.service;
+package org.example.todolistandnotebook.backend.service.IService;
 
 import org.example.todolistandnotebook.backend.pojo.ListOfTodos;
 import org.example.todolistandnotebook.backend.pojo.Todo;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
-import java.util.List;
 
 @Service
 public interface TodosIService {

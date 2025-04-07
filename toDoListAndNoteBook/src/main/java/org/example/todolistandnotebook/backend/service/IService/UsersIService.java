@@ -1,6 +1,5 @@
-package org.example.todolistandnotebook.backend.service;
+package org.example.todolistandnotebook.backend.service.IService;
 
-import org.example.todolistandnotebook.backend.pojo.Todo;
 import org.example.todolistandnotebook.backend.pojo.User;
 import org.springframework.stereotype.Service;
 

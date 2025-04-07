@@ -2,11 +2,12 @@ package org.example.todolistandnotebook.backend.service;
 
 import org.example.todolistandnotebook.backend.mapper.UsersMapper;
 import org.example.todolistandnotebook.backend.pojo.User;
+import org.example.todolistandnotebook.backend.service.IService.UsersIService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UsersService implements UsersIService{
+public class UsersService implements UsersIService {
 
     @Autowired
     private UsersMapper usersMapper;

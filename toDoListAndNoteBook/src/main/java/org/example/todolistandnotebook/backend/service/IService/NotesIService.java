@@ -1,9 +1,13 @@
-package org.example.todolistandnotebook.backend.service;
+package org.example.todolistandnotebook.backend.service.IService;
 
 import org.example.todolistandnotebook.backend.pojo.ListOfNotes;
 import org.example.todolistandnotebook.backend.pojo.Note;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @Service
@@ -15,22 +19,25 @@ public interface NotesIService {
      * @param note 笔记
      * @param jwt jwt令牌
      */
-    Note InsertNotes(Note note, String jwt);
+    Note InsertNotes(Note note, List<MultipartFile> files, String jwt) throws IOException, NoSuchAlgorithmException;
 
     /**
      *修改笔记
      *
      * @param note 笔记
-     * @return Todo 修改后的笔记
+     * @param files 新增文件
+     * @param deletedFiles 待删除文件
+     * @param jwt jwt令牌
+     * @return Note 修改后的笔记
      */
-    Note UpdateNotes(Note note);
+    Note UpdateNotes(Note note , List<MultipartFile> files , List<Long> deletedFiles, String jwt) throws IOException, NoSuchAlgorithmException;
 
     /**
      *删除笔记
      *
      * @param id 笔记id
      */
-    Void DeleteNotes(Long id);
+    void DeleteNotes(Long id);
 
     /**
      * 根据标题内容

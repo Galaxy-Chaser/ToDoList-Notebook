@@ -41,7 +41,7 @@ public class JwtUtil {
     public Integer getIdFromJwt(String s){
         s = s.substring(7);
         Claims claims = ParseJwt(s);
-        log.info(String.valueOf((Integer) claims.get("id")));
+//        log.info(String.valueOf((Integer) claims.get("id")));
         return (Integer) claims.get("id");
     }
 }
