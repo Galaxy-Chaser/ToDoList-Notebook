@@ -590,7 +590,6 @@
 <script src="https://unpkg.com/moment-timezone@0.5.33/builds/moment-timezone-with-data.min.js"></script>
 <script src="https://fastly.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
 <script>
-
     // axios.defaults.withCredentials = true;  // 允许携带凭证
     // 检查登录状态
     if (!localStorage.getItem('jwt_token')) {
@@ -620,6 +619,7 @@
         }
         return Promise.reject(error);
     });
+
     new Vue({
         el: '#app',
         data() {
@@ -643,11 +643,13 @@
             };
         },
         computed: {
+            // 修改：为每个文件对象补充 fileType 信息，确保预览时正确判断文件类型
             fileList() {
                 return (this.currentNote.attachedFiles || []).map(file => ({
                     name: file.originalName,
                     size: file.size,
                     id: file.id,
+                    fileType: file.fileType,  // 新增属性
                     status: 'success'
                 }));
             }
@@ -705,8 +707,8 @@
                     this.todos = res.data.data.todos.map(todo => ({
                         ...todo,
                         showFullContent: false, // 默认不展开内容
-                        dueDate: todo.dueDate ? new Date(todo.dueDate) : null, // 确保处理截止日期
-                        updatedAt: todo.updatedAt ? Number(todo.updatedAt) * 1000 : null // 处理更新时间戳
+                        dueDate: todo.dueDate ? new Date(todo.dueDate) : null,
+                        updatedAt: todo.updatedAt ? Number(todo.updatedAt) * 1000 : null
                     }));
                     this.todoPager.total = res.data.data.total || 0;
                 } catch (error) {
@@ -729,8 +731,8 @@
                     const res = await axios.get(url, { params });
                     this.notes = res.data.data.notes.map(note => ({
                         ...note,
-                        showFullContent: false , // 默认不展开内容
-                        updatedAt: note.updatedAt ? Number(note.updatedAt) * 1000 : null // 处理更新时间戳
+                        showFullContent: false,
+                        updatedAt: note.updatedAt ? Number(note.updatedAt) * 1000 : null
                     }));
                     this.notePager.total = res.data.data.total || 0;
                 } catch (error) {
@@ -825,12 +827,14 @@
 
             // 初始化编辑时的文件列表
             editNote(note) {
+                // 修改：保留附加文件的完整信息，方便预览时判断文件类型
                 this.currentNote = {
                     ...note,
-                    // 转换已有文件为upload组件需要的格式
                     attachedFiles: note.attachedFiles?.map(f => ({
                         name: f.originalName,
                         id: f.id,
+                        fileType: f.fileType,  // 新增属性
+                        size: f.size,
                         status: 'success'
                     })) || []
                 };
@@ -838,7 +842,6 @@
                 this.noteDialogVisible = true;
             },
 
-            // 修改后的保存笔记方法
             async saveNote() {
                 // 表单验证
                 if (!this.currentNote.title?.trim()) {
@@ -855,65 +858,63 @@
                 }
 
                 try {
-                    // 创建 FormData 对象
                     const formData = new FormData();
 
-                    // 添加笔记数据（转换为 JSON 字符串）
+                    // 构造完整的 NoteFile 对象数组（Note.java 中 attachedFiles 需要）
+                    const attachedFiles = this.fileList
+                        .filter(f => f.id && !this.deletedFiles.includes(f.id))
+                        .map(f => ({
+                            id: f.id,
+                            originalName: f.originalName || '',
+                            storedName: f.storedName || '',
+                            filePath: f.filePath || '',
+                            fileType: f.fileType || '',
+                            size: f.size || 0,
+                            createdAt: f.createdAt || null,
+                            noteId: f.noteId || null,
+                            userId: f.userId || null,
+                            fileHash: f.fileHash || ''
+                        }));
+
+                    // 创建包含完整 attachedFiles 的 note 对象
                     const noteBlob = new Blob([JSON.stringify({
                         id: this.currentNote.id,
                         title: this.currentNote.title,
                         content: this.currentNote.content,
-                        attachedFiles: this.fileList
-                            .filter(f => f.id && !this.deletedFiles.includes(f.id))
-                            .map(f => f.id)
+                        attachedFiles: attachedFiles
                     })], { type: "application/json" });
+
                     formData.append('note', noteBlob, 'note.json');
 
-                    // 添加新上传的文件
+                    // 添加上传的新文件
                     if (this.currentNote.uploadFiles) {
                         this.currentNote.uploadFiles.forEach(file => {
                             formData.append('files', file);
                         });
                     }
 
-                    // 将删除的文件 id 以参数形式添加到 FormData 中，由 updateNote 接口统一处理删除逻辑
+                    // 添加删除文件 ID（@RequestParam 绑定）
                     if (this.deletedFiles && this.deletedFiles.length > 0) {
                         this.deletedFiles.forEach(id => {
                             formData.append('deletedFiles', id);
                         });
                     }
 
-                    // 添加进度提示
+                    // 上传提示
                     this.$message.info('文件上传中，请稍候...');
-
-                    const config = {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        },
-                        onUploadProgress: progressEvent => {
-                            const percent = Math.round(
-                                (progressEvent.loaded * 100) / progressEvent.total
-                            );
-                            console.log(`上传进度：${percent}%`);
-                        }
-                    };
 
                     const url = `${this.baseURL}/notes`;
                     const res = await (this.currentNote.id
-                        ? axios.put(url, formData, config)
-                        : axios.post(url, formData, config));
-
-                    // 删除文件的操作已集成在 updateNote 接口中，不再单独调用删除接口
+                        ? axios.put(url, formData) // PUT for update
+                        : axios.post(url, formData)); // POST for create
 
                     this.$message.success('保存成功');
                     this.noteDialogVisible = false;
 
-                    // 智能更新列表
                     const updatedNote = res.data.data;
                     if (this.currentNote.id) {
                         const index = this.notes.findIndex(n => n.id === this.currentNote.id);
                         if (index > -1) {
-                            // 完全使用服务端返回的最新文件列表
                             updatedNote.attachedFiles = res.data.data.attachedFiles || [];
                             this.notes.splice(index, 1, updatedNote);
                         }
@@ -921,6 +922,7 @@
                         this.notePager.page = 1;
                         this.fetchNotes();
                     }
+
                 } catch (error) {
                     if (error.response?.status === 413) {
                         this.$message.error('文件大小超过服务器限制');
@@ -933,7 +935,6 @@
                     }
                 }
             },
-
 
             // 显示笔记弹窗
             showNoteDialog() {
@@ -956,46 +957,249 @@
                 }
             },
 
-            // 预览文件
+            // 修改后的文件预览方法
             previewFile(file) {
                 axios.get(`${this.baseURL}/notes/getFiles?fileId=${file.id}`, {
                     responseType: 'blob'
                 }).then(response => {
                     const blob = new Blob([response.data], { type: response.headers['content-type'] });
                     const fileUrl = window.URL.createObjectURL(blob);
-                    if (file.fileType.startsWith('image/')) {
-                        this.$alert(`<img src="${fileUrl}" style="max-width: 100%;">`, {
+
+                    const styles = `
+                        <style>
+                            @keyframes fadeIn {
+                                from { opacity: 0; }
+                                to { opacity: 1; }
+                            }
+                            .image-preview-modal {
+                                width: auto !important;
+                                max-width: 90vw;
+                                max-height: 90vh;
+                                padding: 0;
+                                margin: 0;
+                                background: transparent;
+                            }
+                            #preview-container {
+                                width: 80vw;
+                                height: 80vh;
+                                background: #fff;
+                                border-radius: 10px;
+                                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                position: relative;
+                                overflow: hidden;
+                                touch-action: none;
+                                animation: fadeIn 0.3s ease;
+                                user-select: none;
+                            }
+                            #img-wrapper {
+                                transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+                                will-change: transform;
+                            }
+                            #preview-img {
+                                max-width: 100%;
+                                max-height: 100%;
+                                object-fit: contain;
+                                user-select: none;
+                                -webkit-user-drag: none;
+                                pointer-events: none;
+                            }
+                            #preview-controls {
+                                position: absolute;
+                                bottom: 12px;
+                                left: 50%;
+                                transform: translateX(-50%);
+                                display: flex;
+                                gap: 10px;
+                                z-index: 10;
+                            }
+                            .ctrl-btn {
+                                background: rgba(0, 0, 0, 0.7);
+                                color: white;
+                                border: none;
+                                border-radius: 6px;
+                                padding: 6px 12px;
+                                cursor: pointer;
+                                font-size: 14px;
+                                transition: all 0.2s ease;
+                            }
+                            .ctrl-btn:hover {
+                                background: rgba(0, 0, 0, 0.85);
+                                transform: scale(1.05);
+                            }
+                            /* 预览框右上角的关闭按钮 */
+                            #close-btn {
+                                position: absolute;
+                                top: 10px;
+                                right: 10px;
+                                z-index: 10;
+                                font-size: 18px;
+                                background: rgba(0, 0, 0, 0.6);
+                                color: white;
+                                border: none;
+                                border-radius: 50%;
+                                width: 32px;
+                                height: 32px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                cursor: pointer;
+                                transition: background 0.2s ease;
+                            }
+                            #close-btn:hover {
+                                background: rgba(0, 0, 0, 0.85);
+                            }
+                        </style>
+                    `;
+
+                    if (file.fileType && file.fileType.startsWith('image/')) {
+                        // 修改：取消关闭按钮注释，确保可以关闭预览窗口
+                        const html = `
+                            ${styles}
+                            <div id="preview-container">
+                                <button id="close-btn">&times;</button>
+                                <div id="img-wrapper">
+                                    <img id="preview-img" src="${fileUrl}" />
+                                </div>
+                                <div id="preview-controls">
+                                    <button class="ctrl-btn" id="zoom-in">放大</button>
+                                    <button class="ctrl-btn" id="zoom-out">缩小</button>
+                                    <button class="ctrl-btn" id="reset">重置</button>
+                                </div>
+                            </div>
+                        `;
+
+                        let modal;
+                        const cleanup = () => {
+                            window.URL.revokeObjectURL(fileUrl);
+                            if (modal) modal.close();
+                        };
+
+                        modal = this.$alert(html, {
                             dangerouslyUseHTMLString: true,
                             customClass: 'image-preview-modal',
                             title: '图片预览',
                             center: true,
-                            callback: () => {
-                                // 预览窗口关闭后释放 URL
-                                window.URL.revokeObjectURL(fileUrl);
-                            }
+                            showClose: false,
+                            callback: cleanup
+                        });
+
+                        this.$nextTick(() => {
+                            const container = document.getElementById('preview-container');
+                            const wrapper = document.getElementById('img-wrapper');
+                            const image = document.getElementById('preview-img');
+                            const zoomInBtn = document.getElementById('zoom-in');
+                            const zoomOutBtn = document.getElementById('zoom-out');
+                            const resetBtn = document.getElementById('reset');
+                            const closeBtn = document.getElementById('close-btn');
+
+                            let scale = 1;
+                            let translateX = 0;
+                            let translateY = 0;
+                            let isDragging = false;
+                            let startX = 0;
+                            let startY = 0;
+                            let initialTranslateX = 0;
+                            let initialTranslateY = 0;
+
+                            const applyTransform = () => {
+                                wrapper.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`;
+                            };
+
+                            const smoothApplyTransform = () => {
+                                wrapper.style.transition = 'transform 0.15s cubic-bezier(0.22, 1, 0.36, 1)';
+                                applyTransform();
+                                setTimeout(() => {
+                                    wrapper.style.transition = '';
+                                }, 150);
+                            };
+
+                            const handleZoom = (delta, clientX, clientY) => {
+                                const prevScale = scale;
+                                scale = Math.max(0.5, Math.min(4, scale + delta));
+                                const rect = container.getBoundingClientRect();
+                                const offsetX = clientX - rect.left - translateX;
+                                const offsetY = clientY - rect.top - translateY;
+                                translateX -= offsetX * (scale / prevScale - 1);
+                                translateY -= offsetY * (scale / prevScale - 1);
+                                smoothApplyTransform();
+                            };
+
+                            const onWheel = (e) => {
+                                e.preventDefault();
+                                handleZoom(e.deltaY > 0 ? -0.1 : 0.1, e.clientX, e.clientY);
+                            };
+
+                            const reset = () => {
+                                scale = 1;
+                                translateX = 0;
+                                translateY = 0;
+                                smoothApplyTransform();
+                            };
+
+                            const onPointerDown = (e) => {
+                                e.preventDefault();
+                                isDragging = true;
+                                startX = e.clientX;
+                                startY = e.clientY;
+                                initialTranslateX = translateX;
+                                initialTranslateY = translateY;
+                                container.style.cursor = 'grabbing';
+
+                                const onPointerMove = (e) => {
+                                    if (!isDragging) return;
+                                    const dx = e.clientX - startX;
+                                    const dy = e.clientY - startY;
+                                    translateX = initialTranslateX + dx;
+                                    translateY = initialTranslateY + dy;
+                                    applyTransform();
+                                };
+
+                                const onPointerUp = () => {
+                                    isDragging = false;
+                                    container.style.cursor = 'grab';
+                                    container.removeEventListener('pointermove', onPointerMove);
+                                    container.removeEventListener('pointerup', onPointerUp);
+                                };
+
+                                container.addEventListener('pointermove', onPointerMove);
+                                container.addEventListener('pointerup', onPointerUp);
+                            };
+
+                            container.addEventListener('wheel', onWheel, { passive: false });
+                            container.addEventListener('pointerdown', onPointerDown);
+
+                            zoomInBtn.addEventListener('click', () => handleZoom(0.2, container.clientWidth / 2, container.clientHeight / 2));
+                            zoomOutBtn.addEventListener('click', () => handleZoom(-0.2, container.clientWidth / 2, container.clientHeight / 2));
+                            resetBtn.addEventListener('click', reset);
+                            closeBtn.addEventListener('click', cleanup);
+
+                            container.style.cursor = 'grab';
+                            image.onload = reset;
                         });
                     } else if (file.fileType === 'application/pdf') {
                         window.open(fileUrl);
                     } else {
                         this.$message.warning('不支持预览此文件类型');
+                        window.URL.revokeObjectURL(fileUrl);
                     }
-                }).catch(error => {
+                }).catch(() => {
                     this.$message.error('预览文件失败');
                 });
             },
 
-
             // 下载文件
             downloadFile(file) {
                 axios.get(`${this.baseURL}/notes/getFiles?fileId=${file.id}&download=true`, {
-                    responseType: 'blob'  // 关键，确保响应以 Blob 格式返回
+                    responseType: 'blob'
                 }).then(response => {
-                    // 根据返回的 content-type 创建 Blob 对象
                     const blob = new Blob([response.data], { type: response.headers['content-type'] });
                     const downloadUrl = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = downloadUrl;
-                    link.download = file.originalName;  // 使用文件原始名称
+                    link.download = file.originalName;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
@@ -1004,7 +1208,6 @@
                     this.$message.error('下载文件失败');
                 });
             },
-
 
             // 获取文件URL
             getFileUrl(fileId) {
@@ -1041,21 +1244,16 @@
 
             // 修改文件处理方法
             handleFileChange(file, fileList) {
-                // 验证文件类型
                 const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
                 if (!allowedTypes.includes(file.raw.type)) {
                     this.$message.error('只支持 JPG/PNG/PDF 格式的文件');
                     return false;
                 }
-
-                // 验证文件大小（精确到字节）
                 const maxSize = 10 * 1024 * 1024; // 10MB
                 if (file.raw.size > maxSize) {
                     this.$message.error(`文件大小不能超过${(maxSize/1024/1024).toFixed(0)}MB`);
                     return false;
                 }
-
-                // 更新待上传文件列表
                 this.currentNote.uploadFiles = fileList
                     .filter(f => f.raw)
                     .map(f => f.raw);
@@ -1064,7 +1262,6 @@
             handleFileRemove(file, fileList) {
                 if (file.id) {
                     this.deletedFiles.push(file.id);
-                    // 立即从当前笔记的附件列表中移除
                     this.currentNote.attachedFiles = this.currentNote.attachedFiles.filter(
                         f => f.id !== file.id
                     );
@@ -1076,13 +1273,11 @@
 
             // 获取文件图标
             getFileIcon(type) {
-                if (!type) return 'el-icon-files'; // 如果没有类型，返回默认图标
+                if (!type) return 'el-icon-files';
                 if (type.startsWith('image/')) return 'el-icon-picture';
                 if (type === 'application/pdf') return 'el-icon-document';
                 return 'el-icon-files';
             },
-
-
 
             // 修改分页处理方法（保持当前页码）
             handleTodoPageChange(page) {
@@ -1100,20 +1295,10 @@
                 todo.showFullContent = !todo.showFullContent;
             },
 
-            // 切换展开和收起状态 for notes
+            // 切换笔记展开和收起状态
             toggleExpandNote(note) {
                 note.showFullContent = !note.showFullContent;
-            },
-
-            // // 确保时间格式化方法正确处理时间戳
-            // formatDateTime(datetime) {
-            //     if (!datetime) return '';
-            //     // 如果后端返回的是秒级时间戳
-            //     const timestamp = Number(datetime);
-            //     return dayjs(timestamp).format('YYYY-MM-DD HH:mm');
-            // }
+            }
         }
     });
 </script>
-</body>
-</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TodoList & Notebook - 登录</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" />
+    <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+<div id="loginApp">
+    <div class="login-container">
+        <div class="login-header">
+            <h2 class="login-title">TodoList & Notebook</h2>
+            <p class="login-subtitle">高效管理你的任务与笔记</p>
+        </div>
+        <!-- 登录表单 -->
+        <el-form
+                class="login-form"
+                :model="loginForm"
+                :rules="loginRules"
+                ref="loginForm"
+                @submit.native.prevent="handleLogin"
+        >
+            <el-form-item prop="username">
+                <el-input v-model="loginForm.username" prefix-icon="el-icon-user" placeholder="请输入用户名" clearable></el-input>
+            </el-form-item>
+            <el-form-item prop="password">
+                <el-input v-model="loginForm.password" prefix-icon="el-icon-lock" placeholder="请输入密码" show-password clearable></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" native-type="submit" :loading="loginLoading" style="width: 100%">登录</el-button>
+            </el-form-item>
+        </el-form>
+        <!-- 底部注册、忘记密码入口 -->
+        <div class="login-footer">
+            <el-button type="text" @click="openRegister">注册账号</el-button>
+            <el-button type="text" @click="openForgot">忘记密码</el-button>
+        </div>
+    </div>
+
+    <!-- 注册对话框 -->
+    <el-dialog title="注册账号" :visible.sync="showRegisterDialog" width="400px" :before-close="handleCloseRegister">
+        <el-form class="form-content" :model="registerForm" :rules="registerRules" ref="registerForm">
+            <el-form-item prop="username">
+                <el-input v-model="registerForm.username" prefix-icon="el-icon-user" placeholder="请输入用户名" clearable></el-input>
+            </el-form-item>
+            <el-form-item prop="email">
+                <el-input v-model="registerForm.email" prefix-icon="el-icon-message" placeholder="请输入邮箱" clearable></el-input>
+            </el-form-item>
+            <el-form-item prop="password">
+                <el-input v-model="registerForm.password" prefix-icon="el-icon-lock" placeholder="请输入密码" show-password clearable></el-input>
+            </el-form-item>
+            <el-form-item prop="confirmPassword">
+                <el-input v-model="registerForm.confirmPassword" prefix-icon="el-icon-lock" placeholder="请确认密码" show-password clearable></el-input>
+            </el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+        <el-button @click="showRegisterDialog = false">取消</el-button>
+        <el-button type="primary" :loading="registerLoading" @click="handleRegister">注册</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 忘记密码对话框 -->
+    <el-dialog title="忘记密码" :visible.sync="showForgotDialog" width="400px" :before-close="handleCloseForgot">
+        <el-form class="form-content" :model="forgotForm" ref="forgotForm">
+            <el-form-item>
+                <el-input v-model="forgotForm.email" prefix-icon="el-icon-message" placeholder="请输入注册时使用的邮箱" clearable></el-input>
+            </el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+        <el-button @click="showForgotDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleForgot">发送重置邮件</el-button>
+      </span>
+        <el-alert style="margin-top: 10px;" title="提示：重置密码功能暂未实现" type="info" show-icon></el-alert>
+    </el-dialog>
+</div>
+
+<script src="../vue.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="login.js"></script>
+</body>
+</html>

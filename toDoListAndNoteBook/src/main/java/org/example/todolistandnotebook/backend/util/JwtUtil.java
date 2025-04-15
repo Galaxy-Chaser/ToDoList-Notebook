@@ -20,7 +20,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .signWith(SignatureAlgorithm.HS256,key)//签名算法,后面一部分为秘钥
                 .setClaims(claims)//载荷
-                .setExpiration(new Date(System.currentTimeMillis() + 3600 * 1000))//有效时间，这里的1000单位为ms
+                .setExpiration(new Date(System.currentTimeMillis() + 3600 * 1000 * 12))//有效时间，这里的1000单位为ms
                 .compact();
     }
 

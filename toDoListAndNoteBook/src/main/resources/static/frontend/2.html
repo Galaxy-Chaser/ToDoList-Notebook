@@ -196,7 +196,7 @@
                     });
                     if (response.data.code === 200) {
                         localStorage.setItem('jwt_token', response.data.data);
-                        window.location.href = 'main.html';
+                        window.location.href = 'main/main.html';
                     } else {
                         this.$message.error(response.data.message || '登录失败');
                     }
