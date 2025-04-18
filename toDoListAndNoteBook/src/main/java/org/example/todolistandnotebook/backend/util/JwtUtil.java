@@ -4,11 +4,13 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.sql.Date;
 import java.util.Map;
 
 @Slf4j
+@Component
 public class JwtUtil {
 
     private String key = "JwtDemo";

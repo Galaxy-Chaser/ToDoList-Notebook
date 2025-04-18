@@ -81,4 +81,10 @@ public interface TodosIService {
      * @return ListOfTodos 待办事项列表
      */
     ListOfTodos GetAllTodos(Integer pageNum , Integer pageSize , String jwt);
+
+    /**
+     * 根据用户id删除待办事项
+     * @param id 用户id
+     */
+    void DeleteTodosByUserId(Integer id);
 }

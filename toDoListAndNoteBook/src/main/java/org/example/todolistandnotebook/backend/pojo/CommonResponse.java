@@ -35,4 +35,9 @@ public class CommonResponse<T> {
     public static <T> CommonResponse<T> error() {
         return new CommonResponse<>(HttpStatus.BAD_REQUEST.value(), "error", null);
     }
+
+    // 静态方法：错误（有数据）
+    public static <T> CommonResponse<T> error(String errorMessage) {
+        return new CommonResponse<>(HttpStatus.BAD_REQUEST.value(), errorMessage, null);
+    }
 }

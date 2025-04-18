@@ -56,4 +56,11 @@ public interface NotesIService {
      * @return List<Note> 笔记列表
      */
     ListOfNotes GetAllNotes(Integer pageNum , Integer pageSize, String jwt);
+
+    /**
+     * 通过用户id删除与用户相关联的所有笔记
+     * @param id 用户id
+     */
+    void DeleteNoteByUserId(Integer id);
+
 }

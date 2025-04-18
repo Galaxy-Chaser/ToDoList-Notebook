@@ -33,4 +33,19 @@ public interface UsersIService {
      * @param user 用户的账号密码
      */
     User LoginUsers(User user);
+
+    /**
+     * 利用用户信息生成验证码并发送至邮件
+     * @param user 用户信息
+     */
+    void CreateVerificationCode(User user);
+
+    /**
+     * 判断用户验证码是否输入正确
+     * @param user 用户信息
+     * @param VerificationCode 验证码
+     * @return 是否通过判断
+     */
+    boolean CheckVerificationCode(User user , String VerificationCode);
+
 }

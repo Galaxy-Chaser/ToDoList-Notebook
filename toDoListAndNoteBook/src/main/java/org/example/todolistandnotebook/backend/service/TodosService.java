@@ -98,4 +98,15 @@ public class TodosService implements TodosIService {
         PageInfo<Todo> pageInfos = new PageInfo<>(todos);
         return new ListOfTodos(pageInfos.getList() , pageInfos.getTotal());
     }
+
+    @Override
+    public void DeleteTodosByUserId(Integer id) {
+        List<Long> todos = todosMapper.getByUserId(id);
+        if(todos != null && !todos.isEmpty()) {
+            for(Long todo : todos) {
+                todosMapper.delete(todo);
+            }
+        }
+        return;
+    }
 }

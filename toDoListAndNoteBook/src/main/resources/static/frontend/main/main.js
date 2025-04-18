@@ -32,7 +32,7 @@ new Vue({
     el: '#app',
     data() {
         return {
-            baseURL: 'http://localhost:8088/toDoListAndNoteBook',
+            baseURL: 'http://localhost:8080',
             activeTab: 'todo',
             todos: [],
             currentTodo: {},
@@ -47,7 +47,11 @@ new Vue({
             noteDialogTitle: '新建笔记',
             noteQuery: { title: '' },
             notePager: { page: 1, total: 0 },
-            deletedFiles: []
+            deletedFiles: [],
+            userInfo: { id: null, username: '', email: '' },
+            passwordDialogVisible: false,
+            passwordForm: { newPassword: '', confirmPassword: '', verification: '' },
+            deletionDialogVisible: false
         };
     },
     computed: {
@@ -72,6 +76,15 @@ new Vue({
                 this.notePager.page = 1;
                 this.fetchNotes();
             }
+        }
+    },
+    created() {
+        const token = localStorage.getItem('jwt_token');
+        if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            this.userInfo.id = payload.id;
+            this.userInfo.username = payload.username;
+            this.userInfo.email = payload.email;
         }
     },
     mounted() {
@@ -666,6 +679,46 @@ new Vue({
             this.currentNote.uploadFiles = fileList
                 .filter(f => f.raw)
                 .map(f => f.raw);
+        },
+
+        // 退出登录
+        logout() {
+            localStorage.removeItem('jwt_token');
+            window.location.href = '../login/login.html';
+        },
+        // 重置密码流程
+        showPasswordDialog() {
+            this.passwordForm = { newPassword: '', confirmPassword: '', verification: '' };
+            this.passwordDialogVisible = true;
+        },
+        sendPasswordVerification() {
+            axios.post(`${this.baseURL}/users/getVerificationCode`, { email: this.userInfo.email })
+                .then(() => this.$message.success('验证码已发送'))
+                .catch(() => this.$message.error('发送失败'));
+        },
+        saveNewPassword() {
+            if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+                return this.$message.warning('两次密码不一致');
+            }
+            axios.put(`${this.baseURL}/users?verification=${this.passwordForm.verification}`, {
+                id: this.userInfo.id,
+                password: this.passwordForm.newPassword,
+                email: this.userInfo.email
+            }).then(() => {
+                this.$message.success('密码已重置，请重新登录');
+                this.logout();
+            }).catch(() => this.$message.error('重置失败'));
+        },
+        // 注销账户流程
+        showDeletionDialog() {
+            this.deletionDialogVisible = true;
+        },
+        deleteAccount() {
+            axios.delete(`${this.baseURL}/users?id=${this.userInfo.id}`)
+                .then(() => {
+                    this.$message.success('账户已注销');
+                    this.logout();
+                }).catch(() => this.$message.error('注销失败'));
         },
 
         // 获取文件图标

@@ -44,4 +44,7 @@ public interface NotesMapper {
                     "from notes where id = #{id} "
     )
     Note getById(Long id);
+
+    @Select("select id from notes where userId = #{userId}")
+    List<Long> getByUserId(Integer userId);
 }

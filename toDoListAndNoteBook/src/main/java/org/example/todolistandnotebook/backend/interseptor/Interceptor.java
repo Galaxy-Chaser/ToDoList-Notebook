@@ -19,6 +19,8 @@ public class Interceptor implements HandlerInterceptor {
 
     @Override //目标方法执行前执行，可用于校验Jwt令牌
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        String path = request.getRequestURI();
+        log.info("拦截器处理路径: " + path); // 或使用日志框架
         String token = request.getHeader("authorization");
         if (!StringUtils.hasLength(token)) {
             log.info("token is empty");

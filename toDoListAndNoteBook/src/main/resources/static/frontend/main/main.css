@@ -283,4 +283,130 @@ body {
     .filter-container {
         grid-template-columns: 1fr;
     }
+
+    /* 新增样式 */
+    .user-profile-card {
+        padding: 2rem;
+        background: linear-gradient(135deg, #f8faff 0%, #fefefe 100%);
+        border-radius: 16px;
+        border: 1px solid rgba(228, 231, 236, 0.6);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px dashed #e4e7ed;
+    }
+
+    .avatar-wrapper {
+        width: 72px;
+        height: 72px;
+        background: var(--primary-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .profile-icon {
+        font-size: 2.2rem;
+        color: white;
+    }
+
+    .profile-meta {
+        flex: 1;
+    }
+
+    .username {
+        margin: 0;
+        font-size: 1.4rem;
+        color: #303133;
+        font-weight: 600;
+    }
+
+    .email, .join-date {
+        margin: 0.4rem 0;
+        font-size: 0.9rem;
+        color: #606266;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .security-section {
+        margin: 2rem 0;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        color: #303133;
+        margin-bottom: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .security-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.2rem;
+    }
+
+    .security-btn {
+        height: auto !important;
+        padding: 1.2rem !important;
+        display: flex !important;
+        flex-direction: column;
+        align-items: flex-start;
+        border-radius: 10px !important;
+        transition: transform 0.2s, box-shadow 0.2s !important;
+    }
+
+    .security-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-text {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 0.4rem;
+    }
+
+    .btn-desc {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        font-weight: 400;
+    }
+
+    .logout-btn {
+        width: 100%;
+        padding: 1rem !important;
+        font-size: 0.95rem !important;
+        letter-spacing: 0.5px;
+        border-radius: 10px !important;
+        background: linear-gradient(135deg, #ffba00 0%, #ff9300 100%);
+        border: none !important;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .user-profile-card {
+            padding: 1.2rem;
+        }
+
+        .profile-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .security-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
 }

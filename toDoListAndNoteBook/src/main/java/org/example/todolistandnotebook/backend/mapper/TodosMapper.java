@@ -46,6 +46,9 @@ public interface TodosMapper {
     )
     Todo getById(Long id);
 
+    @Select("select id from todos where userId = #{userId}")
+    List<Long> getByUserId(Integer userId);
+
     //根据截止时间或状态查询
     List<Todo> getByDueDateOrStatus(@Param("start") Date start, @Param("end") Date end, @Param("status") Integer status ,@Param("userId") Integer userId);
 

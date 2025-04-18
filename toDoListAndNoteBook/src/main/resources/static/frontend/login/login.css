@@ -1,5 +1,6 @@
+/* login.css */
 :root {
-    --primary-color: #409EFF;
+    --primary-color: #409eff;
     --bg-color: #f5f7fa;
     --card-bg: #ffffff;
     --border-radius: 10px;
@@ -7,7 +8,8 @@
 }
 body {
     background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
-    font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+    font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', Arial, sans-serif;
     margin: 0;
     display: flex;
     justify-content: center;
@@ -45,4 +47,16 @@ body {
 }
 .login-footer .el-button {
     margin: 0 10px;
+}
+
+/* 验证码输入和按钮并排 */
+.verification-container {
+    display: flex;
+}
+.verification-input {
+    flex: 1;
+    margin-right: 10px;
+}
+.verification-button {
+    white-space: nowrap;
 }

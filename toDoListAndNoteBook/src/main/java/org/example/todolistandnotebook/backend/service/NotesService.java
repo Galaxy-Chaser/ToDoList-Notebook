@@ -97,4 +97,15 @@ public class NotesService implements NotesIService {
         PageInfo<Note> pageInfos = new PageInfo<>(notes);
         return new ListOfNotes(pageInfos.getList() , pageInfos.getTotal());
     }
+
+    @Override
+    public void DeleteNoteByUserId(Integer id) {
+        List<Long> notes = notesMapper.getByUserId(id);
+        if(notes != null && !notes.isEmpty()){
+            for(Long noteId : notes){
+                notesMapper.delete(noteId);
+            }
+        }
+        return;
+    }
 }

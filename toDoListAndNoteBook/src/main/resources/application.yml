@@ -1,0 +1,17 @@
+spring:
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: 291204058@qq.com
+    password: gkvmvjhctqiubhib
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+logging:
+  level:
+    org.springframework.mail: DEBUG
+    javax.mail: DEBUG

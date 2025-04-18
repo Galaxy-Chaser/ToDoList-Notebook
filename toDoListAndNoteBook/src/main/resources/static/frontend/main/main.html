@@ -201,6 +201,48 @@
                         :total="notePager.total">
                 </el-pagination>
             </el-tab-pane>
+            <!-- 新增 用户设置 模块 -->
+            <el-tab-pane label="用户设置" name="user">
+                <div class="user-settings-container">
+                    <!-- 用户信息展示 -->
+                    <div class="user-profile-card">
+                        <div class="profile-header">
+                            <i class="el-icon-user-solid profile-icon"></i>
+                            <div class="profile-info">
+                                <h3 class="username">{{ userInfo.username }}</h3>
+                                <p class="email">{{ userInfo.email }}</p>
+                            </div>
+                        </div>
+                        <el-divider class="profile-divider"></el-divider>
+
+                        <!-- 安全设置区块 -->
+                        <div class="security-section">
+                            <h4 class="section-title">账户安全</h4>
+                            <div class="security-actions">
+                                <el-button
+                                        type="primary"
+                                        icon="el-icon-refresh-right"
+                                        @click="showPasswordDialog">
+                                    重置密码
+                                </el-button>
+                                <el-button
+                                        type="danger"
+                                        icon="el-icon-delete"
+                                        @click="showDeletionDialog">
+                                    注销账户
+                                </el-button>
+                                <el-button
+                                        type="warning"
+                                        icon="el-icon-switch-button"
+                                        @click="logout"
+                                        class="logout-btn">
+                                    退出登录
+                                </el-button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </el-tab-pane>
         </el-tabs>
     </div>
 
@@ -272,6 +314,34 @@
         <div slot="footer">
             <el-button @click="noteDialogVisible = false">取消</el-button>
             <el-button type="primary" @click="saveNote">保存</el-button>
+        </div>
+    </el-dialog>
+    <!-- 重置密码对话框 -->
+    <el-dialog title="重置密码" :visible.sync="passwordDialogVisible" width="500px">
+        <el-form :model="passwordForm" label-width="120px">
+            <el-form-item label="新密码" prop="newPassword">
+                <el-input type="password" v-model="passwordForm.newPassword" placeholder="请输入新密码"></el-input>
+            </el-form-item>
+            <el-form-item label="确认密码" prop="confirmPassword">
+                <el-input type="password" v-model="passwordForm.confirmPassword" placeholder="请再次输入新密码"></el-input>
+            </el-form-item>
+            <el-form-item label="验证码" prop="verification">
+                <el-input v-model="passwordForm.verification" placeholder="请输入验证码" clearable></el-input>
+                <el-button type="text" @click="sendPasswordVerification">发送验证码</el-button>
+            </el-form-item>
+        </el-form>
+        <div slot="footer">
+            <el-button @click="passwordDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="saveNewPassword">确认重置</el-button>
+        </div>
+    </el-dialog>
+
+    <!-- 注销账户确认对话框 -->
+    <el-dialog title="确认注销账户" :visible.sync="deletionDialogVisible" width="400px">
+        <span>此操作不可逆，是否确认注销账户？</span>
+        <div slot="footer">
+            <el-button @click="deletionDialogVisible = false">取消</el-button>
+            <el-button type="danger" @click="deleteAccount">确认注销</el-button>
         </div>
     </el-dialog>
 </div>
