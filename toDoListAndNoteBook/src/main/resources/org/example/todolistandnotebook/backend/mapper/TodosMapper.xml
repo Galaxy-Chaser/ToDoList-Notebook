@@ -20,6 +20,9 @@
             <if test="status != null">
                 status = #{status},
             </if>
+            <if test="reminded != null">
+                reminded = #{reminded},
+            </if>
         </set>
         where id = #{id}
     </update>
@@ -27,7 +30,7 @@
 
     <!--    查询操作-->
     <select id="getByDueDateOrStatus" resultType="org.example.todolistandnotebook.backend.pojo.Todo">
-        SELECT id, title, description, dueDate, status, createdAt, updatedAt
+        SELECT *
         FROM todos
         <where>
 

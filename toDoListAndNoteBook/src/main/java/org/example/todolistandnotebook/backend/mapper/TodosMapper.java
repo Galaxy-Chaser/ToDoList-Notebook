@@ -11,8 +11,8 @@ public interface TodosMapper {
 
     //插入新todo
     @Options(keyProperty = "id" , useGeneratedKeys = true)
-    @Insert("insert into todos(title , description , dueDate , status , userId) "
-        + "values (#{title} , #{description} , #{dueDate} , #{status} , #{userId})"
+    @Insert("insert into todos(title , description , dueDate , status , userId , reminded) "
+        + "values (#{title} , #{description} , #{dueDate} , #{status} , #{userId} , #{reminded})"
     )
     void insert(Todo todo);
 
@@ -26,14 +26,13 @@ public interface TodosMapper {
     //查询
     //查询所有待办事项
     @Select(
-            "select id , title , description , dueDate , status , createdAt , updatedAt " +
-                    "from todos where userId = #{userId} order by status"
+            "select * from todos where userId = #{userId} order by status"
     )
     List<Todo> getAll(Integer userId);
 
     //根据标题内容查询
     @Select(
-            "select id, title, description, dueDate, status, createdAt, updatedAt " +
+            "select * " +
             "from todos " +
             "where title like concat('%', #{title}, '%') and userId = #{userId}"
     )
@@ -41,8 +40,7 @@ public interface TodosMapper {
 
     //根据id查询
     @Select(
-            "select id , title , description , dueDate , status , createdAt , updatedAt " +
-                    "from todos where id = #{id} "
+            "select * from todos where id = #{id} "
     )
     Todo getById(Long id);
 

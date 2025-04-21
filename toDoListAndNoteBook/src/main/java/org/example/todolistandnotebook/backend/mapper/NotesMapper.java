@@ -25,14 +25,14 @@ public interface NotesMapper {
     //查询
     //查询所有待办事项
     @Select(
-            "select id , title , content , createdAt , updatedAt " +
+            "select id , title , content , createdAt , updatedAt , userId " +
                     "from notes where userId = #{userId} order by updatedAt DESC"
     )
     List<Note> getAll(Integer userId);
 
     //根据标题内容查询
     @Select(
-            "select id , title , content , createdAt , updatedAt " +
+            "select id , title , content , createdAt , updatedAt , userId " +
                     "from notes " +
                     "where title like concat('%', #{title}, '%') and userId = #{userId} order by updatedAt DESC "
     )
@@ -40,7 +40,7 @@ public interface NotesMapper {
 
     //根据id查询
     @Select(
-            "select id , title , content , createdAt , updatedAt " +
+            "select id , title , content , createdAt , updatedAt , userId " +
                     "from notes where id = #{id} "
     )
     Note getById(Long id);

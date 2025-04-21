@@ -27,7 +27,7 @@ public class Schedule {
     /**
      * 定时备份数据库信息
      */
-    @Scheduled(cron = "59 45 23 * * ?", zone = "Asia/Shanghai")
+    @Scheduled(cron = "59 59 23 * * ?", zone = "Asia/Shanghai")
     public void backUpDataBase() {
         log.info("======执行定时器:定时备份数据库=======");
         String backUpPath = "\"" + resourcePath + "/sql/" + Date.valueOf(LocalDate.now()) + "\"";

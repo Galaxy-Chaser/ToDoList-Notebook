@@ -11,6 +11,22 @@ spring:
           auth: true
           ssl:
             enable: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    virtual-host: todolistandnotebook
+    username: banxing
+    password: 123456
+    listener:
+      simple:
+        prefetch: 1  #每次只能获取n条消息，处理玩才能获取下一个
+        acknowledge-mode: auto #消费者确认 开启自动后，出现异常自动向消息队列发送nack（业务异常）或者reject（消息处理或校验异常）,成功执行在返回ack
+        retry: #消费者失败重试
+          enabled: true
+          initial-interval: 1000ms #等待时长
+          multiplier: 1 #下次失败等待时长倍数
+          max-attempts: 3
+          stateless: true
 logging:
   level:
     org.springframework.mail: DEBUG

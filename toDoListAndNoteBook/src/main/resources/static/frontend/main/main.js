@@ -33,6 +33,7 @@ new Vue({
     data() {
         return {
             baseURL: 'http://localhost:8080',
+            // baseURL: 'http://localhost:8088/toDoListAndNoteBook',
             activeTab: 'todo',
             todos: [],
             currentTodo: {},
@@ -51,7 +52,8 @@ new Vue({
             userInfo: { id: null, username: '', email: '' },
             passwordDialogVisible: false,
             passwordForm: { newPassword: '', confirmPassword: '', verification: '' },
-            deletionDialogVisible: false
+            deletionDialogVisible: false,
+            stompClient: null
         };
     },
     computed: {
@@ -90,8 +92,30 @@ new Vue({
     mounted() {
         this.fetchTodos();
         this.fetchNotes();
+        this.connectWebSocket();
     },
     methods: {
+        // WebSocket 连接与订阅提醒
+        connectWebSocket() {
+            const socket = new SockJS(this.baseURL + '/ws');
+            this.stompClient = Stomp.over(socket);
+            const _this = this;
+            this.stompClient.connect({}, function(frame) {
+                console.log('WebSocket 已连接:', frame);
+                // 订阅用户私有提醒队列
+                    _this.stompClient.subscribe('/user/queue/reminders', function(msg) {
+                    // 后端直接发送字符串消息
+                    const reminderText = msg.body;
+                    _this.$message({
+                        message: reminderText,
+                        type: 'warning',
+                        duration: 10000
+                    });
+                });
+            }, function(error) {
+                console.error('WebSocket 连接出错:', error);
+            });
+        },
         // fetchTodos 方法
         async fetchTodos() {
             let url = `${this.baseURL}/todos/getAll`;

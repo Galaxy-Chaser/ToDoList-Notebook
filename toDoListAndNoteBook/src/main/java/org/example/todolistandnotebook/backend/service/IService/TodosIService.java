@@ -87,4 +87,17 @@ public interface TodosIService {
      * @param id 用户id
      */
     void DeleteTodosByUserId(Integer id);
+
+    /**
+     * 设置定时任务
+     * @param todo 待办事项
+     */
+    void ScheduleReminder(Todo todo);
+
+    /**
+     * 从消息队列接受消息并利用websocket发送消息
+     * @param  todoId ScheduleReminder发送的信息
+     */
+    void Reminder(Long todoId);
+
 }

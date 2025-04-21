@@ -8,11 +8,19 @@ import org.example.todolistandnotebook.backend.pojo.ListOfTodos;
 import org.example.todolistandnotebook.backend.pojo.Todo;
 import org.example.todolistandnotebook.backend.service.IService.TodosIService;
 import org.example.todolistandnotebook.backend.util.JwtUtil;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessagePostProcessor;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -22,25 +30,36 @@ public class TodosService implements TodosIService {
     @Autowired
     private TodosMapper todosMapper;
 
+    @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     @Override
     public Todo InsertTodos(Todo todo , String jwt) {
-        jwtUtil = new JwtUtil();
         Integer userId = jwtUtil.getIdFromJwt(jwt);
         todo.setStatus(0);
         todo.setUserId(userId);
+        todo.setReminded(0);
         todosMapper.insert(todo);
         Long id = todo.getId();
-        return todosMapper.getById(id);
+        Todo retTodo = todosMapper.getById(id);
+        ScheduleReminder(retTodo);
+        return retTodo;
     }
 
     @Override
     public Todo UpdateTodos(Todo todo){
         Long id = todo.getId();
         todosMapper.update(todo);
-        return todosMapper.getById(id);
+        Todo retTodo = todosMapper.getById(id);
+        ScheduleReminder(retTodo);
+        return retTodo;
     }
 
     @Override
@@ -51,7 +70,6 @@ public class TodosService implements TodosIService {
 
     @Override
     public ListOfTodos GetTodosByDueDateAndStatus(Date start, Date end, Integer status , Integer pageNum , Integer pageSize , String jwt) {
-        jwtUtil = new JwtUtil();
         Integer userId = jwtUtil.getIdFromJwt(jwt);
         PageHelper.startPage(pageNum,pageSize);
         List<Todo> todos = todosMapper.getByDueDateOrStatus(start , end , status , userId);
@@ -61,7 +79,6 @@ public class TodosService implements TodosIService {
 
     @Override
     public ListOfTodos GetTodosByDueDate(Date start, Date end , Integer pageNum , Integer pageSize , String jwt) {
-        jwtUtil = new JwtUtil();
         Integer userId = jwtUtil.getIdFromJwt(jwt);
         PageHelper.startPage(pageNum,pageSize);
         List<Todo> todos = todosMapper.getByDueDateOrStatus(start , end , null , userId);
@@ -71,7 +88,6 @@ public class TodosService implements TodosIService {
 
     @Override
     public ListOfTodos GetTodosByStatus(Integer status , Integer pageNum , Integer pageSize , String jwt) {
-        jwtUtil = new JwtUtil();
         Integer userId = jwtUtil.getIdFromJwt(jwt);
         PageHelper.startPage(pageNum,pageSize);
         List<Todo> todos = todosMapper.getByDueDateOrStatus(null , null , status , userId);
@@ -81,7 +97,6 @@ public class TodosService implements TodosIService {
 
     @Override
     public ListOfTodos GetTodosByTitle(String title, Integer pageNum , Integer pageSize , String jwt) {
-        jwtUtil = new JwtUtil();
         Integer userId = jwtUtil.getIdFromJwt(jwt);
         PageHelper.startPage(pageNum,pageSize);
         List<Todo> todos = todosMapper.getByTitle(title , userId);
@@ -91,7 +106,6 @@ public class TodosService implements TodosIService {
 
     @Override
     public ListOfTodos GetAllTodos(Integer pageNum , Integer pageSize , String jwt) {
-        jwtUtil = new JwtUtil();
         Integer userId = jwtUtil.getIdFromJwt(jwt);
         PageHelper.startPage(pageNum,pageSize);
         List<Todo> todos = todosMapper.getAll(userId);
@@ -108,5 +122,71 @@ public class TodosService implements TodosIService {
             }
         }
         return;
+    }
+
+    @Override
+    public void ScheduleReminder(Todo todo) {
+        LocalDateTime dueDate = todo.getDueDate().toLocalDateTime();
+        LocalDateTime reminderTime = dueDate.minusDays(1); // 截止时间前1天
+        long delay = Duration.between(LocalDateTime.now(), reminderTime).toMillis();
+
+        log.info("正在将消息发送到rabbitmq");
+
+        if (delay > 0) {
+            rabbitTemplate.convertAndSend(
+                    "todo.delayed.exchange",
+                    "todo.reminder.routingKey",
+                    todo.getId(),
+                    message -> {
+                        message.getMessageProperties().setHeader("x-delay" , delay);
+                        return message;
+                    }
+            );
+            log.info("已发送延迟提醒消息，任务ID: {}", todo.getId());
+        }
+    }
+
+    @Transactional
+    @Override
+    @RabbitListener(queues = "todo.reminder.queue")
+    public void Reminder(Long todoId) {
+        log.info("Reminder information : todoId {}", String.valueOf(todoId));
+        Todo todo = todosMapper.getById(todoId);
+        log.info("Reminder information : {}", String.valueOf(todo));
+        //找不到待办事项直接返回，说明该todo可能被删除了
+        if (todo == null)
+            return;
+
+        // Check if remindedStatus is not null AND if it equals 1
+        if (todo.getReminded() == 1) {
+            log.info("Todo ID: {} already reminded.", todoId);
+            return; // Already reminded
+        }
+
+        //待办事项ddl被延后，还没到通知时间
+        LocalDateTime dueDate = todo.getDueDate().toLocalDateTime();
+        LocalDateTime reminderTime = dueDate.minusDays(1); // 截止时间前1天
+        long delay = Duration.between(LocalDateTime.now(), reminderTime).toMillis();
+        //给10s误差
+        if (delay > 10000) {
+            log.info("Todo ID: {} reminder time not yet reached (delay: {} ms). Rescheduling check potentially needed if logic requires it.", todoId, delay);
+            return;
+        }
+
+        // 通过 WebSocket 发送提醒
+        String userId = todo.getUserId().toString();
+        String message = String.format(
+                "任务 [%s] 将于 %s 截止，请及时处理！",
+                todo.getTitle(),
+                todo.getDueDate()
+        );
+        messagingTemplate.convertAndSendToUser(
+                userId,
+                "/queue/reminders",
+                message
+        );
+        // 更新提醒状态
+        todo.setReminded(1);
+        todosMapper.update(todo);
     }
 }

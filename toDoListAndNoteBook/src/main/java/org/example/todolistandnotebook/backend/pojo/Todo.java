@@ -11,11 +11,12 @@ public class Todo {
     private Long id;
     private String title;
     private String description;
-    private Date dueDate;
+    private Timestamp dueDate;
     private Integer status;//0为未完成 ， 1为已完成
-//    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    //    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Timestamp createdAt;
-//    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    //    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Timestamp updatedAt;
     private Integer userId;
+    private Integer reminded;//0为未提醒，1为已提醒
 }
