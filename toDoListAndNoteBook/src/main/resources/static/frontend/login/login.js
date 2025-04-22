@@ -2,8 +2,8 @@ new Vue({
     el: '#loginApp',
     data() {
         return {
-            baseURL: 'http://localhost:8080',
-            // baseURL: 'http://localhost:8088/toDoListAndNoteBook',
+            // baseURL: 'http://localhost:8080',
+            baseURL: 'http://localhost:8088/toDoListAndNoteBook',
             // 登录
             loginLoading: false,
             loginForm: { username: '', password: '' },

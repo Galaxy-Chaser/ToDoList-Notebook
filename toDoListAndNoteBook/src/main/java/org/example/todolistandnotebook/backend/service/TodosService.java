@@ -174,15 +174,13 @@ public class TodosService implements TodosIService {
         }
 
         // 通过 WebSocket 发送提醒
-        String userId = todo.getUserId().toString();
         String message = String.format(
                 "任务 [%s] 将于 %s 截止，请及时处理！",
                 todo.getTitle(),
                 todo.getDueDate()
         );
-        messagingTemplate.convertAndSendToUser(
-                userId,
-                "/queue/reminders",
+        messagingTemplate.convertAndSend(
+                "/topic/reminders." + todo.getUserId(),
                 message
         );
         // 更新提醒状态

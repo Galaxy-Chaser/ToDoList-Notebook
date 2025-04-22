@@ -30,12 +30,12 @@ public class Schedule {
     @Scheduled(cron = "59 59 23 * * ?", zone = "Asia/Shanghai")
     public void backUpDataBase() {
         log.info("======执行定时器:定时备份数据库=======");
-        String backUpPath = "\"" + resourcePath + "/sql/" + Date.valueOf(LocalDate.now()) + "\"";
+        String backUpPath = resourcePath + "\\" + Date.valueOf(LocalDate.now());
         File backUpFile = new File(backUpPath);
         if (!backUpFile.exists()) {
             backUpFile.mkdirs();
         }
-        File dataFile = new File(backUpPath+"/campusportal"+System.currentTimeMillis()+".sql");
+        File dataFile = new File(backUpPath+"\\campusportal"+System.currentTimeMillis()+".sql");
         //拼接cmd命令
         StringBuilder sb = new StringBuilder();
         Map<String, String> dbInfo = jdbcUtil.getDBInfo();
@@ -46,7 +46,7 @@ public class Schedule {
         sb.append(dataFile);
         log.info("======数据库备份cmd命令为：{}=======", sb);
         try {
-            Process exec = Runtime.getRuntime().exec("cmd /c"+ sb);
+            Process exec = Runtime.getRuntime().exec("cmd /c "+ sb);
             if (exec.waitFor() == 0){
                 log.info("======数据库备份成功，路径为：{}=======", dataFile);
             }
@@ -61,7 +61,7 @@ public class Schedule {
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Shanghai")
     public void deleteBackUpDataBase() {
         log.info("======执行定时器:定时删除备份数据库文件=======");
-        String backUpPath = resourcePath+"/sql";
+        String backUpPath = resourcePath;
         File backUpFile = new File(backUpPath);
         if (backUpFile.exists()) {
             File[] files = backUpFile.listFiles();

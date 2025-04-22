@@ -89,7 +89,7 @@
 
                             <!-- 待办事项模块中的展开按钮 -->
                             <div class="card-footer">
-                                <span>截止日期：{{ formatDate(todo.dueDate) }}</span>
+                                <span>截止日期：{{ formatDateTime(todo.dueDate) }}</span>
                                 <el-button
                                         class="expand-button"
                                         type="text"
@@ -162,7 +162,7 @@
 
                             <!-- 笔记模块中的展开按钮 -->
                             <div class="card-footer">
-                                <span>最后更新：{{ formatDateTime(note.updatedAt || note.createdAt) }}</span>
+                                <span>最后更新：{{ formatDateTime(note.updatedAt) }}</span>
                                 <el-button
                                         class="expand-button"
                                         type="text"
@@ -263,9 +263,10 @@
             <el-form-item label="截止日期" prop="dueDate">
                 <el-date-picker
                         v-model="currentTodo.dueDate"
-                        type="date"
-                        value-format="yyyy-MM-dd"
-                        placeholder="选择截止日期">
+                        type="datetime"
+                        value-format="timestamp"
+                        format="yyyy-MM-dd HH:mm"
+                        placeholder="选择截止时间">
                 </el-date-picker>
             </el-form-item>
         </el-form>

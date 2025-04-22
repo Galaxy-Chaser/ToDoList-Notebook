@@ -32,8 +32,8 @@ new Vue({
     el: '#app',
     data() {
         return {
-            baseURL: 'http://localhost:8080',
-            // baseURL: 'http://localhost:8088/toDoListAndNoteBook',
+            // baseURL: 'http://localhost:8080',
+            baseURL: 'http://localhost:8088/toDoListAndNoteBook',
             activeTab: 'todo',
             todos: [],
             currentTodo: {},
@@ -99,23 +99,23 @@ new Vue({
         connectWebSocket() {
             const socket = new SockJS(this.baseURL + '/ws');
             this.stompClient = Stomp.over(socket);
+
             const _this = this;
             this.stompClient.connect({}, function(frame) {
                 console.log('WebSocket 已连接:', frame);
-                // 订阅用户私有提醒队列
-                    _this.stompClient.subscribe('/user/queue/reminders', function(msg) {
-                    // 后端直接发送字符串消息
-                    const reminderText = msg.body;
-                    _this.$message({
-                        message: reminderText,
-                        type: 'warning',
-                        duration: 10000
-                    });
-                });
+                // 用 _this 而不是 this
+                _this.stompClient.subscribe(
+                    `/topic/reminders.${_this.userInfo.id}`,
+                    msg => {
+                        const text = msg.body;
+                        _this.$message({ message: text, type: 'warning', duration: 10000 });
+                    }
+                );
             }, function(error) {
                 console.error('WebSocket 连接出错:', error);
             });
         },
+
         // fetchTodos 方法
         async fetchTodos() {
             let url = `${this.baseURL}/todos/getAll`;
@@ -151,8 +151,8 @@ new Vue({
                 this.todos = res.data.data.todos.map(todo => ({
                     ...todo,
                     showFullContent: false,
-                    dueDate: todo.dueDate ? new Date(todo.dueDate) : null,
-                    updatedAt: todo.updatedAt ? Number(todo.updatedAt) * 1000 : null
+                    dueDate: todo.dueDate ? todo.dueDate : null,
+                    updatedAt: todo.updatedAt ? todo.updatedAt : null
                 }));
                 this.todoPager.total = res.data.data.total || 0;
             } catch (error) {
@@ -176,7 +176,7 @@ new Vue({
                 this.notes = res.data.data.notes.map(note => ({
                     ...note,
                     showFullContent: false,
-                    updatedAt: note.updatedAt ? Number(note.updatedAt) * 1000 : null
+                    updatedAt: note.updatedAt ? note.updatedAt : null
                 }));
                 this.notePager.total = res.data.data.total || 0;
             } catch (error) {
@@ -219,7 +219,7 @@ new Vue({
         editTodo(todo) {
             this.currentTodo = {
                 ...todo,
-                dueDate: todo.dueDate ? new Date(todo.dueDate) : null
+                dueDate: dayjs(this.currentTodo.dueDate).format('YYYY-MM-DD HH:mm:ss')
             };
             this.todoDialogTitle = '编辑待办';
             this.todoDialogVisible = true;
@@ -243,7 +243,7 @@ new Vue({
             try {
                 const todoData = {
                     ...this.currentTodo,
-                    dueDate: dayjs(this.currentTodo.dueDate).format('YYYY-MM-DD')
+                    dueDate: dayjs(this.currentTodo.dueDate).format('YYYY-MM-DD HH:mm:ss')
                 };
 
                 const res = await (todoData.id ?
@@ -650,13 +650,16 @@ new Vue({
 
         // 格式化日期
         formatDate(date) {
-            if (!date) return '';
-            return dayjs(date).format('YYYY-MM-DD');
+            return date.substring(0 , 10);
+            // if (!date) return '';
+            // return dayjs(date).format('YYYY-MM-DD');
         },
 
         // 格式化日期时间
         formatDateTime(datetime) {
-            return dayjs(datetime).format('YYYY-MM-DD HH:mm');
+            return datetime.substring(0 , 16);
+            // const date = new Date(datetime);
+            // return dayjs(date).format('YYYY-MM-DD HH:mm');
         },
 
         beforeFileRemove(file) {

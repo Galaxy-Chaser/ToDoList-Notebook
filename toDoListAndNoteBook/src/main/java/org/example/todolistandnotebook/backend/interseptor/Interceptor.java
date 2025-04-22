@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.example.todolistandnotebook.backend.service.UsersService;
 import org.example.todolistandnotebook.backend.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -15,12 +16,11 @@ import org.springframework.web.servlet.ModelAndView;
 @Slf4j
 public class Interceptor implements HandlerInterceptor {
 
+    @Autowired
     private UsersService usersService;
 
     @Override //目标方法执行前执行，可用于校验Jwt令牌
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        String path = request.getRequestURI();
-        log.info("拦截器处理路径: " + path); // 或使用日志框架
         String token = request.getHeader("authorization");
         if (!StringUtils.hasLength(token)) {
             log.info("token is empty");
