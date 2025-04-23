@@ -53,7 +53,8 @@ new Vue({
             passwordDialogVisible: false,
             passwordForm: { newPassword: '', confirmPassword: '', verification: '' },
             deletionDialogVisible: false,
-            stompClient: null
+            stompClient: null,
+            markdownIt: null
         };
     },
     computed: {
@@ -88,6 +89,7 @@ new Vue({
             this.userInfo.username = payload.username;
             this.userInfo.email = payload.email;
         }
+        this.markdownIt = window.markdownit({ breaks: true });
     },
     mounted() {
         this.fetchTodos();
@@ -95,6 +97,10 @@ new Vue({
         this.connectWebSocket();
     },
     methods: {
+
+        renderMarkdown(text) {
+            return this.markdownIt.render(text || '');
+        },
         // WebSocket 连接与订阅提醒
         connectWebSocket() {
             const socket = new SockJS(this.baseURL + '/ws');
@@ -175,7 +181,8 @@ new Vue({
                 const res = await axios.get(url, { params });
                 this.notes = res.data.data.notes.map(note => ({
                     ...note,
-                    showFullContent: false,
+                    showContent: false,
+                    showAttachments: false,
                     updatedAt: note.updatedAt ? note.updatedAt : null
                 }));
                 this.notePager.total = res.data.data.total || 0;
@@ -772,8 +779,14 @@ new Vue({
             todo.showFullContent = !todo.showFullContent;
         },
 
-        toggleExpandNote(note) {
-            note.showFullContent = !note.showFullContent;
+        // 切换显示内容
+        toggleContent(note) {
+            note.showContent = !note.showContent;
+        },
+
+        // 切换显示附件
+        toggleAttachments(note) {
+            note.showAttachments = !note.showAttachments;
         }
     }
 });

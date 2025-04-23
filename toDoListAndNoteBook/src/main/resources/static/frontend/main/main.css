@@ -409,4 +409,22 @@ body {
         }
     }
 
+    /* 弹窗内Markdown编辑与预览统一高度 */
+    .markdown-editor {
+        display: flex;
+        height: 400px;
+        gap: 16px;
+    }
+    .editor-textarea, .markdown-preview {
+        flex: 1;
+        height: 100%;
+        overflow: auto;
+    }
+    .markdown-preview {
+        padding: 12px;
+        background: #f8f9fa;
+        border: 1px solid #ebeef5;
+        border-radius: 6px;
+    }
+
 }
