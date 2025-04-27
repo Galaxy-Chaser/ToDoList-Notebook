@@ -2,8 +2,7 @@ package org.example.todolistandnotebook.backend.service;
 
 import org.example.todolistandnotebook.backend.mapper.NoteFilesMapper;
 import org.example.todolistandnotebook.backend.pojo.NoteFile;
-import org.example.todolistandnotebook.backend.service.IService.NoteFilesIService;
-import org.example.todolistandnotebook.backend.util.FileUtil;
+import org.example.todolistandnotebook.backend.utils.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +16,13 @@ import java.util.HashSet;
 import java.util.List;
 
 @Service
-public class NoteFilesService implements NoteFilesIService {
+public class NoteFilesServiceImpl implements org.example.todolistandnotebook.backend.service.iService.NoteFilesService {
 
     @Autowired
     private NoteFilesMapper noteFilesMapper;
 
-    private FileUtil fileUtil = new FileUtil();
+    @Autowired
+    private FileUtils fileUtils;
 
     @Override
     public List<NoteFile> getNoteFileByNoteId(Long noteId) {
@@ -35,7 +35,8 @@ public class NoteFilesService implements NoteFilesIService {
         List<NoteFile> nfList = noteFilesMapper.selectByNoteId(noteId);
         for (NoteFile file : nfList) {
             String StoragePath = file.getFilePath();
-            fileUtil.deleteFromDisk(StoragePath);
+            //调用FileUtils的deleteFromDisk方法删除文件
+            fileUtils.deleteFromDisk(StoragePath);
         }
         noteFilesMapper.deleteByNoteId(noteId);
         return;
@@ -48,11 +49,12 @@ public class NoteFilesService implements NoteFilesIService {
     }
 
     @Override
-    public void deleteNoteFileByNoteFileId(Long noteFileId) {
+    public void deleteSingleNoteFileByNoteFileId(Long noteFileId) {
         NoteFile file = noteFilesMapper.selectById(noteFileId);
         if (file != null) {
             String storagePath = file.getFilePath();
-            fileUtil.deleteFromDisk(storagePath);
+            //调用FileUtils的deleteFromDisk方法删除文件
+            fileUtils.deleteFromDisk(storagePath);
             noteFilesMapper.deleteById(noteFileId);
         } else {
             // 可以选择记录日志或直接返回
@@ -65,41 +67,46 @@ public class NoteFilesService implements NoteFilesIService {
     public void deleteNoteFilesByNoteFilesId(List<Long> nfIdList) {
         if(nfIdList == null || nfIdList.isEmpty()) return;
         for(Long id : nfIdList) {
-            deleteNoteFileByNoteFileId(id);
+            deleteSingleNoteFileByNoteFileId(id);
         }
     }
 
     @Transactional
     @Override
-    public List<NoteFile> saveNoteFiles(List<MultipartFile> files, Long noteId, Integer userId) throws IOException, NoSuchAlgorithmException {
+    public List<NoteFile> saveNoteFilesLocally(List<MultipartFile> files, Long noteId, Integer userId) throws IOException, NoSuchAlgorithmException {
         List<NoteFile> nfList = new ArrayList<>();
         if (files == null || files.isEmpty()) {
             return nfList;
         }
         for (MultipartFile file : files) {
-            int flag = fileUtil.validateFile(file);
+            //校验文件是否合法
+            int flag = fileUtils.validateFile(file);
             if(flag != 0)
                 continue;
-            String fileHash = fileUtil.calculateSHA256(file);
+            //计算文件哈希值
+            String fileHash = fileUtils.calculateSHA256(file);
             NoteFile nf = new NoteFile();
             nf.setOriginalName(file.getOriginalFilename());
-            String storageName = fileUtil.generateStoredName(file.getOriginalFilename());
+            //生成存储文件名
+            String storageName = fileUtils.generateStoredName(file.getOriginalFilename());
             nf.setStoredName(storageName);
-            Path storagePath = fileUtil.buildStoragePath(userId , storageName);
-            fileUtil.saveToDisk(file, storagePath);
+            //生成存储路径
+            Path storagePath = fileUtils.buildStoragePath(userId , storageName);
+            //文件保存到磁盘
+            fileUtils.saveToDisk(file, storagePath);
             nf.setFilePath(String.valueOf(storagePath));
             nf.setFileType(file.getContentType());
             nf.setSize(file.getSize());
             nf.setNoteId(noteId);
             nf.setUserId(userId);
             nf.setFileHash(fileHash);
-            nfList.add(saveNoteFile(nf));
+            nfList.add(saveSingleNoteFile(nf));
         }
         return nfList;
     }
 
     @Override
-    public NoteFile saveNoteFile(NoteFile noteFile) {
+    public NoteFile saveSingleNoteFile(NoteFile noteFile) {
         noteFilesMapper.insert(noteFile);
         long id = noteFile.getId();
         return noteFilesMapper.selectById(id);

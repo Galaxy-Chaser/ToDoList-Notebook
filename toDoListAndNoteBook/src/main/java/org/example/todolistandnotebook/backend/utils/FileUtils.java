@@ -1,12 +1,9 @@
-package org.example.todolistandnotebook.backend.util;
+package org.example.todolistandnotebook.backend.utils;
 
-import org.apache.tomcat.util.http.fileupload.InvalidFileNameException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -21,8 +18,13 @@ import java.util.HexFormat;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * @packageName: org.example.todolistandnotebook.backend.utils
+ * @className: FileUtils
+ * @description: web上传文件工具类，用于对文件进行校验、生成唯一存储文件名、计算文件哈希值、存储文件、删除文件等操作
+ */
 @Component
-public class FileUtil {
+public class FileUtils {
 
     private final String uploadRoot = "L:\\UrlStorage\\Todolist&Notebook";
 

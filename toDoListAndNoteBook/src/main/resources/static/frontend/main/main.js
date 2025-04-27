@@ -23,7 +23,7 @@ axios.interceptors.response.use(response => {
 }, error => {
     if (error.response.status === 401) {
         localStorage.removeItem('jwt_token');
-        window.location.href = '../2.html';
+        window.location.href = '../main/login.html';
     }
     return Promise.reject(error);
 });

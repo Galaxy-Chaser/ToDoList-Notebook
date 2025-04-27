@@ -6,11 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.todolistandnotebook.backend.mapper.TodosMapper;
 import org.example.todolistandnotebook.backend.pojo.ListOfTodos;
 import org.example.todolistandnotebook.backend.pojo.Todo;
-import org.example.todolistandnotebook.backend.service.IService.TodosIService;
-import org.example.todolistandnotebook.backend.util.JwtUtil;
-import org.springframework.amqp.AmqpException;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessagePostProcessor;
+import org.example.todolistandnotebook.backend.utils.JwtUtils;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,13 +21,13 @@ import java.util.List;
 
 @Slf4j
 @Service
-public class TodosService implements TodosIService {
+public class TodosServiceImpl implements org.example.todolistandnotebook.backend.service.iService.TodosService {
 
     @Autowired
     private TodosMapper todosMapper;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private JwtUtils jwtUtils;
 
     @Autowired
     RabbitTemplate rabbitTemplate;
@@ -42,13 +38,14 @@ public class TodosService implements TodosIService {
     @Transactional
     @Override
     public Todo InsertTodos(Todo todo , String jwt) {
-        Integer userId = jwtUtil.getIdFromJwt(jwt);
+        Integer userId = jwtUtils.getIdFromJwt(jwt);
         todo.setStatus(0);
         todo.setUserId(userId);
         todo.setReminded(0);
         todosMapper.insert(todo);
         Long id = todo.getId();
         Todo retTodo = todosMapper.getById(id);
+        //将消息发送到rabbitmq，用于在截止时间前1天提醒
         ScheduleReminder(retTodo);
         return retTodo;
     }
@@ -58,6 +55,7 @@ public class TodosService implements TodosIService {
         Long id = todo.getId();
         todosMapper.update(todo);
         Todo retTodo = todosMapper.getById(id);
+        //将消息发送到rabbitmq，用于在截止时间前1天提醒
         ScheduleReminder(retTodo);
         return retTodo;
     }
@@ -70,45 +68,60 @@ public class TodosService implements TodosIService {
 
     @Override
     public ListOfTodos GetTodosByDueDateAndStatus(Date start, Date end, Integer status , Integer pageNum , Integer pageSize , String jwt) {
-        Integer userId = jwtUtil.getIdFromJwt(jwt);
+        //获取用户id
+        Integer userId = jwtUtils.getIdFromJwt(jwt);
+        //设置分页参数
         PageHelper.startPage(pageNum,pageSize);
         List<Todo> todos = todosMapper.getByDueDateOrStatus(start , end , status , userId);
+        //分页
         PageInfo<Todo> pageInfos = new PageInfo<>(todos);
         return new ListOfTodos(pageInfos.getList() , pageInfos.getTotal());
     }
 
     @Override
     public ListOfTodos GetTodosByDueDate(Date start, Date end , Integer pageNum , Integer pageSize , String jwt) {
-        Integer userId = jwtUtil.getIdFromJwt(jwt);
+        //获取用户id
+        Integer userId = jwtUtils.getIdFromJwt(jwt);
+        //设置分页参数
         PageHelper.startPage(pageNum,pageSize);
         List<Todo> todos = todosMapper.getByDueDateOrStatus(start , end , null , userId);
+        //分页
         PageInfo<Todo> pageInfos = new PageInfo<>(todos);
         return new ListOfTodos(pageInfos.getList() , pageInfos.getTotal());
     }
 
     @Override
     public ListOfTodos GetTodosByStatus(Integer status , Integer pageNum , Integer pageSize , String jwt) {
-        Integer userId = jwtUtil.getIdFromJwt(jwt);
+        //获取用户id
+        Integer userId = jwtUtils.getIdFromJwt(jwt);
+        //设置分页参数
         PageHelper.startPage(pageNum,pageSize);
         List<Todo> todos = todosMapper.getByDueDateOrStatus(null , null , status , userId);
+        //分页
         PageInfo<Todo> pageInfos = new PageInfo<>(todos);
         return new ListOfTodos(pageInfos.getList() , pageInfos.getTotal());
     }
 
     @Override
     public ListOfTodos GetTodosByTitle(String title, Integer pageNum , Integer pageSize , String jwt) {
-        Integer userId = jwtUtil.getIdFromJwt(jwt);
+        //获取用户id
+        Integer userId = jwtUtils.getIdFromJwt(jwt);
+        //设置分页参数
         PageHelper.startPage(pageNum,pageSize);
         List<Todo> todos = todosMapper.getByTitle(title , userId);
+        //分页
         PageInfo<Todo> pageInfos = new PageInfo<>(todos);
         return new ListOfTodos(pageInfos.getList() , pageInfos.getTotal());
     }
 
     @Override
     public ListOfTodos GetAllTodos(Integer pageNum , Integer pageSize , String jwt) {
-        Integer userId = jwtUtil.getIdFromJwt(jwt);
+        //获取用户id
+        Integer userId = jwtUtils.getIdFromJwt(jwt);
+        //设置分页参数
         PageHelper.startPage(pageNum,pageSize);
         List<Todo> todos = todosMapper.getAll(userId);
+        //分页
         PageInfo<Todo> pageInfos = new PageInfo<>(todos);
         return new ListOfTodos(pageInfos.getList() , pageInfos.getTotal());
     }
@@ -126,13 +139,16 @@ public class TodosService implements TodosIService {
 
     @Override
     public void ScheduleReminder(Todo todo) {
+        //计算延迟时间
         LocalDateTime dueDate = todo.getDueDate().toLocalDateTime();
         LocalDateTime reminderTime = dueDate.minusDays(1); // 截止时间前1天
         long delay = Duration.between(LocalDateTime.now(), reminderTime).toMillis();
 
         log.info("正在将消息发送到rabbitmq");
 
+        //delay小于0说明ddl在一天之内，无需发送提醒
         if (delay > 0) {
+            //发送延迟消息
             rabbitTemplate.convertAndSend(
                     "todo.delayed.exchange",
                     "todo.reminder.routingKey",
@@ -152,12 +168,11 @@ public class TodosService implements TodosIService {
     public void Reminder(Long todoId) {
         log.info("Reminder information : todoId {}", String.valueOf(todoId));
         Todo todo = todosMapper.getById(todoId);
-        log.info("Reminder information : {}", String.valueOf(todo));
         //找不到待办事项直接返回，说明该todo可能被删除了
         if (todo == null)
             return;
 
-        // Check if remindedStatus is not null AND if it equals 1
+        // reminded == 1 , 说明已经提醒过了
         if (todo.getReminded() == 1) {
             log.info("Todo ID: {} already reminded.", todoId);
             return; // Already reminded
@@ -179,6 +194,7 @@ public class TodosService implements TodosIService {
                 todo.getTitle(),
                 todo.getDueDate()
         );
+        log.info(message);
         messagingTemplate.convertAndSend(
                 "/topic/reminders." + todo.getUserId(),
                 message

@@ -1,6 +1,6 @@
 package org.example.todolistandnotebook;
 
-import org.example.todolistandnotebook.backend.util.EmailUtil;
+import org.example.todolistandnotebook.backend.utils.EmailUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,7 +12,7 @@ import java.util.Random;
 class ToDoListAndNoteBookApplicationTests {
 
     @Autowired
-    private EmailUtil emailUtil;
+    private EmailUtils emailUtils;
 
     @Test
     void contextLoads() {
@@ -28,7 +28,7 @@ class ToDoListAndNoteBookApplicationTests {
         String redisKey = "291204058@qq.com" + "VerificationCode";
 
         //发送邮件
-        emailUtil.sendTxtEmail("291204058@qq.com" , "验证码：" , verification);
+        emailUtils.sendTxtEmail("291204058@qq.com" , "验证码：" , verification);
 
         jedis.set(redisKey , verification);
         //设置过期时间5min

@@ -10,6 +10,11 @@ import org.springframework.context.annotation.Configuration;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @packageName: org.example.todolistandnotebook.backend.config
+ * @className: RabbitMQConfig
+ * @description: RabbitMQ配置类, 包括延迟交换机、提醒队列、绑定交换机与队列
+ */
 @Configuration
 public class RabbitMQConfig {
 
@@ -17,6 +22,7 @@ public class RabbitMQConfig {
     @Bean
     public CustomExchange delayedExchange() {
         Map<String, Object> args = new HashMap<>();
+        //设置交换机类型
         args.put("x-delayed-type", "direct");
         return new CustomExchange(
                 "todo.delayed.exchange",

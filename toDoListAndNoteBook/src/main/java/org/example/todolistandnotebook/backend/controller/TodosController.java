@@ -3,19 +3,18 @@ package org.example.todolistandnotebook.backend.controller;
 import org.example.todolistandnotebook.backend.pojo.CommonResponse;
 import org.example.todolistandnotebook.backend.pojo.ListOfTodos;
 import org.example.todolistandnotebook.backend.pojo.Todo;
-import org.example.todolistandnotebook.backend.service.TodosService;
+import org.example.todolistandnotebook.backend.service.TodosServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
-import java.util.List;
 
 @RestController
 @RequestMapping("/todos")
 public class TodosController {
 
     @Autowired
-    private TodosService service;
+    private TodosServiceImpl service;
 
     //增
     @PostMapping

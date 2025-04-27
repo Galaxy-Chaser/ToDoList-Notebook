@@ -1,4 +1,4 @@
-package org.example.todolistandnotebook.backend.util;
+package org.example.todolistandnotebook.backend.utils;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -13,13 +13,18 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.Map;
 
+/**
+ * @packageName: org.example.todolistandnotebook.backend.utils
+ * @className: Schedule
+ * @description: 定时器，定时备份数据库和删除备份数据库文件
+ */
 @Slf4j
 @Component
 @EnableScheduling
 public class Schedule {
 
     @Autowired
-    private JdbcUtil jdbcUtil;
+    private JdbcUtils jdbcUtils;
 
     @Value("${server.resource}")
     private String resourcePath;
@@ -27,7 +32,7 @@ public class Schedule {
     /**
      * 定时备份数据库信息
      */
-    @Scheduled(cron = "59 59 23 * * ?", zone = "Asia/Shanghai")
+    @Scheduled(cron = "59 14 23 * * ?", zone = "Asia/Shanghai")
     public void backUpDataBase() {
         log.info("======执行定时器:定时备份数据库=======");
         String backUpPath = resourcePath + "\\" + Date.valueOf(LocalDate.now());
@@ -38,7 +43,7 @@ public class Schedule {
         File dataFile = new File(backUpPath+"\\campusportal"+System.currentTimeMillis()+".sql");
         //拼接cmd命令
         StringBuilder sb = new StringBuilder();
-        Map<String, String> dbInfo = jdbcUtil.getDBInfo();
+        Map<String, String> dbInfo = jdbcUtils.getDBInfo();
         sb.append("mysqldump");
         sb.append(" -u").append(dbInfo.get("userName"));
         sb.append(" -p").append(dbInfo.get("passWord"));
@@ -58,7 +63,7 @@ public class Schedule {
     /**
      * 定时删除数据库备份文件，只保留最近一个星期
      */
-    @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Shanghai")
+    @Scheduled(cron = "0 15 23 * * ?", zone = "Asia/Shanghai")
     public void deleteBackUpDataBase() {
         log.info("======执行定时器:定时删除备份数据库文件=======");
         String backUpPath = resourcePath;

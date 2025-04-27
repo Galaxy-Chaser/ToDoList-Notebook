@@ -6,7 +6,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-
+/**
+ * @packageName: org.example.todolistandnotebook.backend.config
+ * @className: CorsConfig
+ * @description: 跨域配置
+ */
 @Configuration
 public class CorsConfig {
 
@@ -18,13 +22,17 @@ public class CorsConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.addAllowedOrigin("http://localhost:63342"); // 1 设置访问源地址
-        corsConfiguration.addAllowedOrigin("http://localhost:8088/toDoListAndNoteBook"); // 1 设置访问源地址
+        // 1 设置访问源地址
+        corsConfiguration.addAllowedOrigin("http://localhost:63342");
+        corsConfiguration.addAllowedOrigin("http://localhost:8088/toDoListAndNoteBook");
         corsConfiguration.setAllowCredentials(true);
-        corsConfiguration.addAllowedHeader("*"); // 2 设置访问源请求头
-        corsConfiguration.addAllowedMethod("*"); // 3 设置访问源请求方法
+        // 2 设置访问源请求头
+        corsConfiguration.addAllowedHeader("*");
+        // 3 设置访问源请求方法
+        corsConfiguration.addAllowedMethod("*");
         corsConfiguration.setMaxAge(MAX_AGE);
-        source.registerCorsConfiguration("/**", corsConfiguration); // 4 对接口配置跨域设置
+        // 4 对接口配置跨域设置
+        source.registerCorsConfiguration("/**", corsConfiguration);
         return new CorsFilter(source);
     }
 }

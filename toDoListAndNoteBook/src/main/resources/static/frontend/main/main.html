@@ -246,19 +246,37 @@
     </el-dialog>
 
     <!-- 笔记弹窗 -->
-    <el-dialog :title="noteDialogTitle" :visible.sync="noteDialogVisible" width="900px">
+    <el-dialog
+            :title="noteDialogTitle"
+            :visible.sync="noteDialogVisible"
+            width="900px">
         <el-form :model="currentNote" label-width="90px">
             <el-form-item label="标题" prop="title">
-                <el-input v-model="currentNote.title" placeholder="请输入笔记标题"></el-input>
+                <el-input
+                        v-model="currentNote.title"
+                        placeholder="请输入笔记标题">
+                </el-input>
             </el-form-item>
-            <el-form-item label="内容" prop="content">
-                <div class="markdown-editor">
-                    <div class="editor-textarea">
-                        <el-input type="textarea" :rows="12" v-model="currentNote.content" placeholder="请输入 Markdown 内容" resize="none"></el-input>
+
+            <el-tabs v-model="activeEditorTab">
+                <el-tab-pane label="编辑" name="edit">
+                    <el-input
+                            type="textarea"
+                            v-model="currentNote.content"
+                            :rows="15"
+                            placeholder="请输入 Markdown 内容"
+                            resize="none"
+                            class="editor-textarea">
+                    </el-input>
+                </el-tab-pane>
+
+                <el-tab-pane label="预览" name="preview">
+                    <div class="markdown-preview markdown-body"
+                         v-html="renderMarkdown(currentNote.content)">
                     </div>
-                    <div class="markdown-preview markdown-body" v-html="renderMarkdown(currentNote.content)"></div>
-                </div>
-            </el-form-item>
+                </el-tab-pane>
+            </el-tabs>
+
             <el-form-item label="附件">
                 <el-upload
                         multiple
@@ -267,18 +285,16 @@
                         :auto-upload="false"
                         :on-change="handleFileChange"
                         :on-remove="handleFileRemove"
-                        :before-remove="beforeFileRemove"
                         accept=".jpg,.jpeg,.png,.pdf"
-                        :limit="5"
-                        :on-exceed="handleExceed">
+                        :limit="5">
                     <el-button size="small" type="primary">选择文件</el-button>
                     <div slot="tip" class="el-upload__tip">
-                        支持图片（JPEG/PNG）和PDF，单个文件不超过10MB，最多5个文件
+                        支持图片和PDF，单个文件不超过10MB
                     </div>
                 </el-upload>
-
             </el-form-item>
         </el-form>
+
         <div slot="footer">
             <el-button @click="noteDialogVisible = false">取消</el-button>
             <el-button type="primary" @click="saveNote">保存</el-button>

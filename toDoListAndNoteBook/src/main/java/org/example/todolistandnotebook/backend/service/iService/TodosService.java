@@ -1,4 +1,4 @@
-package org.example.todolistandnotebook.backend.service.IService;
+package org.example.todolistandnotebook.backend.service.iService;
 
 import org.example.todolistandnotebook.backend.pojo.ListOfTodos;
 import org.example.todolistandnotebook.backend.pojo.Todo;
@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import java.sql.Date;
 
 @Service
-public interface TodosIService {
+public interface TodosService {
 
     /**
-     *新增待办事项
+     * 新增待办事项
      *
      * @param todo 待办事项
      * @param jwt 待办事项
@@ -18,7 +18,7 @@ public interface TodosIService {
     Todo InsertTodos(Todo todo , String jwt);
 
     /**
-     *修改待办事项
+     * 修改待办事项
      *
      * @param todo 待办事项
      * @return Todo 修改后的待办事项
@@ -26,7 +26,7 @@ public interface TodosIService {
     Todo UpdateTodos(Todo todo);
 
     /**
-     *删除待办事项
+     * 删除待办事项
      *
      * @param id 待办事项id
      */
@@ -77,7 +77,7 @@ public interface TodosIService {
 
     /**
      * 查询所有待办事项
-     *@param jwt jwt令牌
+     * @param jwt jwt令牌
      * @return ListOfTodos 待办事项列表
      */
     ListOfTodos GetAllTodos(Integer pageNum , Integer pageSize , String jwt);

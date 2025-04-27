@@ -1,10 +1,10 @@
-package org.example.todolistandnotebook.backend.service.IService;
+package org.example.todolistandnotebook.backend.service.iService;
 
 import org.example.todolistandnotebook.backend.pojo.User;
 import org.springframework.stereotype.Service;
 
 @Service
-public interface UsersIService {
+public interface UsersService {
 
     /**
      *新增用户

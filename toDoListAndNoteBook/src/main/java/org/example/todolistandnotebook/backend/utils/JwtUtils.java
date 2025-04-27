@@ -1,4 +1,4 @@
-package org.example.todolistandnotebook.backend.util;
+package org.example.todolistandnotebook.backend.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -9,9 +9,14 @@ import org.springframework.stereotype.Component;
 import java.sql.Date;
 import java.util.Map;
 
+/**
+ * @packageName: org.example.todolistandnotebook.backend.utils
+ * @className: JwtUtils
+ * @description: jwt工具类，用于生成和解析jwt
+ */
 @Slf4j
 @Component
-public class JwtUtil {
+public class JwtUtils {
 
     private String key = "JwtDemo";
 

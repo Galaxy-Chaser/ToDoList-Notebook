@@ -1,4 +1,4 @@
-package org.example.todolistandnotebook.backend.service.IService;
+package org.example.todolistandnotebook.backend.service.iService;
 
 import org.example.todolistandnotebook.backend.pojo.NoteFile;
 import org.springframework.stereotype.Service;
@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 
 @Service
-public interface NoteFilesIService {
+public interface NoteFilesService {
 
     /**
      * 根据笔记Id返回笔记所关联文件
@@ -37,29 +37,29 @@ public interface NoteFilesIService {
      * 根据文件Id删除文件
      * @param noteFileId 文件Id
      */
-    public void deleteNoteFileByNoteFileId(Long noteFileId);
+    public void deleteSingleNoteFileByNoteFileId(Long noteFileId);
 
     /**
-     * 根据文件Id删除文件
+     * 根据文件Id删除文件（批量）
      * @param nfIdList 文件idliebiao
      */
     public void deleteNoteFilesByNoteFilesId(List<Long> nfIdList);
 
     /**
-     *
+     * 批量保存文件,生成存储名、存储路径等信息
      * @param files 从前端传来的文件
      * @param noteId 笔记Id
      * @param userId 用户Id
      * @return 返回保存的列表
      */
-    public List<NoteFile> saveNoteFiles(List<MultipartFile> files , Long noteId , Integer userId) throws IOException, NoSuchAlgorithmException;
+    public List<NoteFile> saveNoteFilesLocally(List<MultipartFile> files , Long noteId , Integer userId) throws IOException, NoSuchAlgorithmException;
 
     /**
-     * 保存文件
+     * 将信息保存到数据库
      * @param noteFile 文件
      * @return NoteFile 返回文件
      */
-    public NoteFile saveNoteFile(NoteFile noteFile);
+    public NoteFile saveSingleNoteFile(NoteFile noteFile);
 
     /**
      * 修改文件

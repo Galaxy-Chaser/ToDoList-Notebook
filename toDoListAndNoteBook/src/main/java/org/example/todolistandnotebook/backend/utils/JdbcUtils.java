@@ -1,12 +1,17 @@
-package org.example.todolistandnotebook.backend.util;
+package org.example.todolistandnotebook.backend.utils;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 
+/**
+ * @packageName: org.example.todolistandnotebook.backend.utils
+ * @className: JdbcUtils
+ * @description: 用于获取数据库信息
+ */
 @Component
-public class JdbcUtil {
+public class JdbcUtils {
 
     @Value("${spring.datasource.url}")
     private String url;
