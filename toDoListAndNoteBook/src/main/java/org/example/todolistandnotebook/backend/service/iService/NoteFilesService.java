@@ -1,6 +1,7 @@
 package org.example.todolistandnotebook.backend.service.iService;
 
 import org.example.todolistandnotebook.backend.pojo.NoteFile;
+import org.example.todolistandnotebook.backend.pojo.ResourceDto;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -80,4 +81,11 @@ public interface NoteFilesService {
      */
     public List<String> getFileHashByNoteId(Long noteId);
 
+    /**
+     *
+     * @param fileId 文件ID
+     * @param download 是否下载
+     * @return ResourceDto
+     */
+    ResourceDto downloadFile(Long fileId, boolean download);
 }

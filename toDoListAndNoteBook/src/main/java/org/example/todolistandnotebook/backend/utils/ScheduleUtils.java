@@ -21,7 +21,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @EnableScheduling
-public class Schedule {
+public class ScheduleUtils {
 
     @Autowired
     private JdbcUtils jdbcUtils;
@@ -74,6 +74,8 @@ public class Schedule {
                 if (file.isDirectory()) {
                     Date date1 = Date.valueOf(file.getName());
                     Date date2 = Date.valueOf(LocalDate.now());
+                    log.info("======备份文件日期为：{}=======", date1);
+                    log.info("======当前日期为：{}=======", date2);
                     long betweenDay = DateUtil.between(date1, date2, DateUnit.DAY);
                     if (betweenDay > 7) {
                         File[] subFiles = file.listFiles();

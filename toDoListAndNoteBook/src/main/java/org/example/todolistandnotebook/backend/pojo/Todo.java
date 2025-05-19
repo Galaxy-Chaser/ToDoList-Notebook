@@ -14,15 +14,15 @@ public class Todo {
     /**待办事项描述**/
     private String description;
     /**待办事项截止时间 ， 格式：yyyy-MM-dd HH:mm:ss**/
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss" , timezone = "GMT+8")
     private Timestamp dueDate;
     /**待办事项状态 0为未完成 ， 1为已完成**/
     private Integer status;
     /**待办事项创建时间 ， 格式：yyyy-MM-dd HH:mm:ss**/
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss" , timezone = "GMT+8")
     private Timestamp createdAt;
     /**待办事项修改时间 ， 格式：yyyy-MM-dd HH:mm:ss**/
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss" , timezone = "GMT+8")
     private Timestamp updatedAt;
     /**待办事项用户id**/
     private Integer userId;

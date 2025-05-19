@@ -13,6 +13,25 @@
 </head>
 <body>
 <div id="app">
+    <div class="header-bar" style="display:flex; justify-content: flex-end; padding: 10px 30px; background: #fff; border-bottom:1px solid #ebeef5;">
+        <el-dropdown @command="handleNotificationCommand">
+            <span class="el-dropdown-link">
+                <el-badge :value="unreadCount" class="item">
+                    <i class="el-icon-bell" style="font-size:24px; cursor:pointer;"></i>
+                </el-badge>
+            </span>
+            <el-dropdown-menu slot="dropdown" style="min-width: 280px; max-height: 350px; overflow:auto;">
+                <el-dropdown-item v-if="notifications.length===0" disabled>暂无新提醒</el-dropdown-item>
+                <el-dropdown-item v-for="(note, idx) in notifications" :key="idx" :command="idx">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span :style="{fontWeight: note.read ? 'normal' : 'bold'}">{{ note.text }}</span>
+                        <i class="el-icon-circle-close" style="font-size: 12px;" @click.stop="markRead(idx)"></i>
+                    </div>
+                </el-dropdown-item>
+                <el-dropdown-item divided command="clear">清除所有</el-dropdown-item>
+            </el-dropdown-menu>
+        </el-dropdown>
+    </div>
     <div class="app-container">
         <el-tabs v-model="activeTab">
             <!-- 待办事项模块 -->

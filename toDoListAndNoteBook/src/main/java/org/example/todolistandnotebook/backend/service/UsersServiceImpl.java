@@ -29,6 +29,8 @@ public class UsersServiceImpl implements org.example.todolistandnotebook.backend
     @Autowired
     private EmailUtils emailUtils;
 
+    JedisPool jedisPool = new JedisPool("localhost", 6379);
+
     @Override
     public User InsertUsers(User user) {
         usersMapper.insertUser(user);
@@ -62,8 +64,6 @@ public class UsersServiceImpl implements org.example.todolistandnotebook.backend
     @Override
     public void CreateVerificationCode(User user) {
 
-        JedisPool jedisPool = new JedisPool("localhost", 6379);
-
         //生成验证码
         Random rand = new Random();
         String verification = String.format("%06d", rand.nextInt(1000000));
@@ -80,7 +80,7 @@ public class UsersServiceImpl implements org.example.todolistandnotebook.backend
 
     @Override
     public boolean CheckVerificationCode(User user , String verificationCode) {
-        JedisPool jedisPool = new JedisPool("localhost", 6379);
+
         String redisKey = user.getEmail() + "VerificationCode";
         try (Jedis jedis = jedisPool.getResource()) {
             //判断验证码是否存在或过期
@@ -91,6 +91,8 @@ public class UsersServiceImpl implements org.example.todolistandnotebook.backend
             log.info(jedis.get(redisKey));
             //判断验证码是否正确
             boolean flag = jedis.get(redisKey).equals(verificationCode);
+            if(flag)
+                jedis.del(redisKey);
             //返回验证结果
             return flag;
         }

@@ -26,7 +26,7 @@ public interface TodosMapper {
     //查询
     //查询所有待办事项
     @Select(
-            "select * from todos where userId = #{userId} order by status"
+            "select * from todos where userId = #{userId} order by status , dueDate"
     )
     List<Todo> getAll(Integer userId);
 
@@ -34,7 +34,8 @@ public interface TodosMapper {
     @Select(
             "select * " +
             "from todos " +
-            "where title like concat('%', #{title}, '%') and userId = #{userId}"
+            "where title like concat('%', #{title}, '%') and userId = #{userId}" +
+                    " order by status , dueDate"
     )
     List<Todo> getByTitle(@Param("title") String title , @Param("userId") Integer userId);
 

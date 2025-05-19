@@ -2,9 +2,11 @@ package org.example.todolistandnotebook.backend.service.iService;
 
 import org.example.todolistandnotebook.backend.pojo.ListOfTodos;
 import org.example.todolistandnotebook.backend.pojo.Todo;
+import org.example.todolistandnotebook.backend.pojo.TodoReminder;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
+import java.util.List;
 
 @Service
 public interface TodosService {
@@ -99,5 +101,18 @@ public interface TodosService {
      * @param  todoId ScheduleReminder发送的信息
      */
     void Reminder(Long todoId);
+
+    /**
+     * 在用户登录后获取再离线期间的待办事项提醒
+     * @param jwt jwt令牌
+     * @return List<TodoReminder> 待办事项提醒列表
+     */
+    List<TodoReminder> getTodoReminders(String jwt);
+
+    /**
+     * 删除用户的待办事项提醒
+     * @param id 待办事项提醒id
+     */
+    void deleteTodoReminder(int id);
 
 }

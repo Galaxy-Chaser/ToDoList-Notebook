@@ -14,12 +14,12 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
-    virtual-host: todolistandnotebook
+    virtual-host: /todolistandnotebook
     username: banxing
     password: 123456
     listener:
       simple:
-        prefetch: 1  #每次只能获取n条消息，处理玩才能获取下一个
+        prefetch: 1  #每次只能获取n条消息，处理完才能获取下一个
         acknowledge-mode: auto #消费者确认 开启自动后，出现异常自动向消息队列发送nack（业务异常）或者reject（消息处理或校验异常）,成功执行在返回ack
         retry: #消费者失败重试
           enabled: true

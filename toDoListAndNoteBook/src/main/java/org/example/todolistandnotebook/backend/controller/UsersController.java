@@ -2,6 +2,7 @@ package org.example.todolistandnotebook.backend.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.todolistandnotebook.backend.pojo.CommonResponse;
+import org.example.todolistandnotebook.backend.pojo.SignupRequest;
 import org.example.todolistandnotebook.backend.pojo.User;
 import org.example.todolistandnotebook.backend.service.UsersServiceImpl;
 import org.example.todolistandnotebook.backend.utils.JwtUtils;
@@ -20,8 +21,14 @@ public class UsersController {
     private UsersServiceImpl usersServiceImpl;
 
     //注册
-    @PostMapping("/register")
-    public CommonResponse<String> insert(@RequestBody User user , @RequestParam String verification) {
+    @PostMapping("/signup")
+    public CommonResponse<String> insert(@RequestBody SignupRequest request) {
+
+        String verification = request.getVerification();
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPassword(request.getPassword());
 
         //验证verification
         if(!usersServiceImpl.CheckVerificationCode(user , verification)) {
@@ -36,7 +43,7 @@ public class UsersController {
     }
 
     //获取验证码
-    @PostMapping("/getVerificationCode")
+    @PostMapping("/VerificationCode")
     public CommonResponse<String> register(@RequestBody User user) {
         usersServiceImpl.CreateVerificationCode(user);
         return CommonResponse.success("已发送验证码到邮箱");
@@ -73,7 +80,13 @@ public class UsersController {
 
     //修改密码
     @PutMapping
-    public CommonResponse<String> updatePassword(@RequestBody User user  , @RequestParam String verification) {
+    public CommonResponse<String> updatePassword(@RequestBody SignupRequest request) {
+
+        String verification = request.getVerification();
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setPassword(request.getPassword());
+
         //验证verification
         if(!usersServiceImpl.CheckVerificationCode(user , verification)) {
             log.info("验证码不匹配");

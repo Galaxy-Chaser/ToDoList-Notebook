@@ -23,7 +23,7 @@ axios.interceptors.response.use(response => {
 }, error => {
     if (error.response.status === 401) {
         localStorage.removeItem('jwt_token');
-        window.location.href = '../main/login.html';
+        window.location.href = '../login/login.html';
     }
     return Promise.reject(error);
 });
@@ -32,8 +32,8 @@ new Vue({
     el: '#app',
     data() {
         return {
-            // baseURL: 'http://localhost:8080',
             baseURL: 'http://localhost:8088/toDoListAndNoteBook',
+            //baseURL: 'http://localhost:8080',
             activeTab: 'todo',
             todos: [],
             currentTodo: {},
@@ -46,6 +46,7 @@ new Vue({
             currentNote: {},
             noteDialogVisible: false,
             noteDialogTitle: '新建笔记',
+            activeEditorTab: '编辑',
             noteQuery: { title: '' },
             notePager: { page: 1, total: 0 },
             deletedFiles: [],
@@ -54,11 +55,11 @@ new Vue({
             passwordForm: { newPassword: '', confirmPassword: '', verification: '' },
             deletionDialogVisible: false,
             stompClient: null,
-            markdownIt: null
+            markdownIt: null,
+            notifications: []
         };
     },
     computed: {
-        // 为每个文件对象补充 fileType 信息，确保预览时正确判断文件类型
         fileList() {
             return (this.currentNote.attachedFiles || []).map(file => ({
                 name: file.originalName,
@@ -67,10 +68,12 @@ new Vue({
                 fileType: file.fileType,
                 status: 'success'
             }));
+        },
+        unreadCount() {
+            return this.notifications.length;
         }
     },
     watch: {
-        // 监听分页大小变化
         pageSize() {
             if (this.activeTab === 'todo') {
                 this.todoPager.page = 1;
@@ -85,7 +88,8 @@ new Vue({
         const token = localStorage.getItem('jwt_token');
         if (token) {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            this.userInfo.id = payload.id;
+            // 确保 userInfo.id 转换为整数
+            this.userInfo.id = parseInt(payload.id);
             this.userInfo.username = payload.username;
             this.userInfo.email = payload.email;
         }
@@ -95,43 +99,113 @@ new Vue({
         this.fetchTodos();
         this.fetchNotes();
         this.connectWebSocket();
+        this.loadOfflineNotifications();
     },
     methods: {
-
         renderMarkdown(text) {
             return this.markdownIt.render(text || '');
         },
-        // WebSocket 连接与订阅提醒
+        async loadOfflineNotifications() {
+            try {
+                const resp = await axios.get(`${this.baseURL}/todos/todoReminder`);
+                this.notifications = resp.data.data.map(n => ({
+                    id: n.id,
+                    text: n.message
+                }));
+            } catch (err) {
+                console.error('加载离线提醒失败', err);
+            }
+        },
         connectWebSocket() {
-            const socket = new SockJS(this.baseURL + '/ws');
-            this.stompClient = Stomp.over(socket);
+            const token = localStorage.getItem('jwt_token');
+            if (!token) {
+                console.error('JWT Token 为空，终止 WebSocket 连接');
+                return;
+            }
 
-            const _this = this;
-            this.stompClient.connect({}, function(frame) {
-                console.log('WebSocket 已连接:', frame);
-                // 用 _this 而不是 this
-                _this.stompClient.subscribe(
-                    `/topic/reminders.${_this.userInfo.id}`,
-                    msg => {
-                        const text = msg.body;
-                        _this.$message({ message: text, type: 'warning', duration: 10000 });
+            // 通过 URL 传递 token（兼容性高）
+            const socket = new SockJS(`${this.baseURL}/ws?token=${encodeURIComponent(token)}`);
+            this.stompClient = Stomp.over(socket);
+            this.stompClient.debug = null;
+
+            this.stompClient.connect(
+                {
+                    'token': localStorage.getItem('jwt_token') // 在header中传递token
+                },
+                frame => {
+                    console.log('WebSocket 已连接:', frame);
+                    this.stompClient.subscribe(
+                        `/topic/reminders.${this.userInfo.id}`,
+                        msg => {
+                            let notification;
+                            try {
+                                const payload = JSON.parse(msg.body);
+                                // 确保字段名与离线通知结构一致
+                                notification = {
+                                    id: payload.id,
+                                    text: payload.message || payload.content || '' // 兼容不同字段名
+                                };
+                            } catch {
+                                // 解析失败时保存完整消息内容
+                                notification = {
+                                    id: null,
+                                    text: msg.body
+                                };
+                            }
+                            this.notifications.unshift(notification);
+                        }
+                    );
+                },
+                error => console.error('WebSocket 连接出错:', error)
+            );
+        },
+
+        async markRead(idx) {
+            const note = this.notifications[idx];
+            if (!note.id) {
+                this.notifications.splice(idx, 1);
+                return;
+            }
+            try {
+                const params = new URLSearchParams();
+                params.append('ReminderId', note.id);
+
+                await axios.delete(`${this.baseURL}/todos/todoReminder?${params.toString()}`);
+                this.notifications.splice(idx, 1);
+            } catch (error) {
+                console.error('删除提醒失败:', error);
+            }
+        },
+        async handleNotificationCommand(command) {
+            if (command === 'clear') {
+                const ids = this.notifications.map(n => n.id).filter(Boolean);
+                if (ids.length) {
+                    const params = new URLSearchParams();
+                    ids.forEach(id => params.append('ReminderIds', id)); // 正确添加多个ReminderIds参数
+                    try {
+                        await axios.delete(`${this.baseURL}/todos/todoReminder?${params.toString()}`);
+                        this.notifications = this.notifications.filter(n => !ids.includes(n.id));
+                    } catch (error) {
+                        console.error('批量删除提醒失败:', error);
                     }
-                );
-            }, function(error) {
-                console.error('WebSocket 连接出错:', error);
-            });
+                } else {
+                    this.notifications = [];
+                }
+            } else {
+                await this.markRead(command);
+            }
         },
 
         // fetchTodos 方法
         async fetchTodos() {
-            let url = `${this.baseURL}/todos/getAll`;
+            let url = `${this.baseURL}/todos`;
             const params = {
                 pageNum: this.todoPager.page,
                 pageSize: this.pageSize
             };
 
             if (this.todoQuery.title) {
-                url = `${this.baseURL}/todos/getByTitle`;
+                url = `${this.baseURL}/todos`;
                 params.title = this.todoQuery.title;
             }
 
@@ -142,13 +216,13 @@ new Vue({
                 params.endDate = endDate;
 
                 if (this.todoQuery.status !== '') {
-                    url = `${this.baseURL}/todos/getByDueDateAndStatus`;
+                    url = `${this.baseURL}/todos`;
                     params.status = this.todoQuery.status;
                 } else {
-                    url = `${this.baseURL}/todos/getByDueDate`;
+                    url = `${this.baseURL}/todos`;
                 }
             } else if (this.todoQuery.status !== '') {
-                url = `${this.baseURL}/todos/getByStatus`;
+                url = `${this.baseURL}/todos`;
                 params.status = this.todoQuery.status;
             }
 
@@ -168,13 +242,13 @@ new Vue({
 
         // fetchNotes 方法
         async fetchNotes() {
-            let url = `${this.baseURL}/notes/getAll`;
+            let url = `${this.baseURL}/notes`;
             const params = {
                 pageNum: this.notePager.page,
                 pageSize: this.pageSize
             };
             if (this.noteQuery.title) {
-                url = `${this.baseURL}/notes/getByTitle`;
+                url = `${this.baseURL}/notes`;
                 params.title = this.noteQuery.title;
             }
             try {
@@ -259,6 +333,7 @@ new Vue({
 
                 this.$message.success('保存成功');
                 this.todoDialogVisible = false;
+                this.fetchTodos();
 
                 if (todoData.id) {
                     const index = this.todos.findIndex(t => t.id === todoData.id);
@@ -351,6 +426,7 @@ new Vue({
 
                 this.$message.success('保存成功');
                 this.noteDialogVisible = false;
+                this.fetchNotes()
 
                 const updatedNote = res.data.data;
                 if (this.currentNote.id) {
@@ -400,7 +476,7 @@ new Vue({
         // 文件预览方法
         // 修改后的文件预览方法
         previewFile(file) {
-            axios.get(`${this.baseURL}/notes/getFiles?fileId=${file.id}`, {
+            axios.get(`${this.baseURL}/notes/files?fileId=${file.id}`, {
                 responseType: 'blob'
             }).then(response => {
                 const blob = new Blob([response.data], { type: response.headers['content-type'] });
@@ -633,7 +709,7 @@ new Vue({
 
         // 下载文件方法
         downloadFile(file) {
-            axios.get(`${this.baseURL}/notes/getFiles?fileId=${file.id}&download=true`, {
+            axios.get(`${this.baseURL}/notes/files?fileId=${file.id}&download=true`, {
                 responseType: 'blob'
             }).then(response => {
                 const blob = new Blob([response.data], { type: response.headers['content-type'] });
@@ -652,7 +728,7 @@ new Vue({
 
         // 获取文件URL
         getFileUrl(fileId) {
-            return `${this.baseURL}/notes/getFiles?fileId=${fileId}`;
+            return `${this.baseURL}/notes/files?fileId=${fileId}`;
         },
 
         // 格式化日期

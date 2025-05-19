@@ -2,7 +2,7 @@ new Vue({
     el: '#loginApp',
     data() {
         return {
-            // baseURL: 'http://localhost:8080',
+            //baseURL: 'http://localhost:8080',
             baseURL: 'http://localhost:8088/toDoListAndNoteBook',
             // 登录
             loginLoading: false,
@@ -117,7 +117,7 @@ new Vue({
             }
             this.registerCodeLoading = true;
             try {
-                await axios.post(`${this.baseURL}/users/getVerificationCode`, {
+                await axios.post(`${this.baseURL}/users/VerificationCode`, {
                     email: this.registerForm.email
                 });
                 this.$message.success('验证码已发送，请注意查收');
@@ -135,8 +135,8 @@ new Vue({
                 try {
                     const { username, email, password, verification } = this.registerForm;
                     const res = await axios.post(
-                        `${this.baseURL}/users/register?verification=${verification}`,
-                        { username, email, password }
+                        `${this.baseURL}/users/signup`,
+                        { username, email, password , verification}
                     );
                     if (res.data.code === 200) {
                         this.$message.success('注册成功');
@@ -178,7 +178,7 @@ new Vue({
                     const { email, password, verification } = this.forgotForm;
                     const res = await axios.put(
                         `${this.baseURL}/users?verification=${verification}`,
-                        { email, password }
+                        { email, password , verification}
                     );
                     if (res.data.code === 200) {
                         this.$message.success('密码重置成功');

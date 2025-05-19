@@ -22,6 +22,6 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(interceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/toDoListAndNoteBook/ws","/toDoListAndNoteBook/ws/**","/users/register","/users/getVerificationCode","/users/**","/frontend/**");
+                .excludePathPatterns("/toDoListAndNoteBook/frontend/**","/toDoListAndNoteBook/ws","/toDoListAndNoteBook/ws/**","/users/register","/users/getVerificationCode","/users/**","/**/frontend/**");
     }
 }

@@ -18,7 +18,6 @@ import java.util.Map;
 @Configuration
 public class RabbitMQConfig {
 
-    // 延迟交换机（需安装 rabbitmq_delayed_message_exchange 插件）
     @Bean
     public CustomExchange delayedExchange() {
         Map<String, Object> args = new HashMap<>();
@@ -36,7 +35,7 @@ public class RabbitMQConfig {
     // 提醒队列
     @Bean
     public Queue reminderQueue() {
-        return new Queue("todo.reminder.queue");
+        return new Queue("todo.reminder.queue" , true);
     }
 
     // 绑定交换机与队列

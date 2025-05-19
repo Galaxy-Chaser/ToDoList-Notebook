@@ -2,14 +2,21 @@ package org.example.todolistandnotebook.backend.service;
 
 import org.example.todolistandnotebook.backend.mapper.NoteFilesMapper;
 import org.example.todolistandnotebook.backend.pojo.NoteFile;
+import org.example.todolistandnotebook.backend.pojo.ResourceDto;
 import org.example.todolistandnotebook.backend.utils.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -130,5 +137,25 @@ public class NoteFilesServiceImpl implements org.example.todolistandnotebook.bac
     public List<String> getFileHashByNoteId(Long noteId) {
         List<String> nfList = noteFilesMapper.selectFileHashByNoteId(noteId);
         return nfList;
+    }
+
+    @Override
+    public ResourceDto downloadFile(Long fileId, boolean download) {
+        NoteFile file = getNoteFileByNoteFileId(fileId);
+        Path path = Paths.get(file.getFilePath());
+        Resource resource = new FileSystemResource(path);
+
+        MediaType mediaType = MediaType.parseMediaType(file.getFileType());
+        String disposition = download ? "attachment" : "inline";
+        // 对文件名进行 URL 编码
+        String encodedFilename = UriUtils.encode(file.getOriginalName(), StandardCharsets.UTF_8);
+        String contentDisposition = String.format("%s; filename=\"%s\"; filename*=UTF-8''%s",
+                disposition, encodedFilename, encodedFilename);
+
+        ResourceDto resourceDto = new ResourceDto();
+        resourceDto.setResource(resource);
+        resourceDto.setMediaType(mediaType);
+        resourceDto.setContentDisposition(contentDisposition);
+        return resourceDto;
     }
 }
